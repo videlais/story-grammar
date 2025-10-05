@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarot Three-Card Spread - Story Grammar Example</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #e6e6fa;
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h1 {
+            color: #ffd700;
+            font-size: 3em;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            font-weight: bold;
+        }
+        
+        .subtitle {
+            font-style: italic;
+            color: #dda0dd;
+            margin-top: 15px;
+            font-size: 1.2em;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #8a2be2, #9370db);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(138, 43, 226, 0.6);
+        }
+        
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .spread-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        
+        .card {
+            width: 200px;
+            height: 350px;
+            background: linear-gradient(135deg, #2c1810, #4a2c2a);
+            border: 3px solid #ffd700;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+        
+        .card:hover::before {
+            opacity: 1;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .card:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(255, 215, 0, 0.3);
+        }
+        
+        .card-position {
+            font-size: 14px;
+            color: #ffd700;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .card-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 15px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-meaning {
+            font-size: 14px;
+            color: #dda0dd;
+            text-align: center;
+            line-height: 1.4;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+        
+        .interpretation {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .interpretation h3 {
+            color: #ffd700;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .interpretation-text {
+            font-size: 16px;
+            line-height: 1.6;
+            text-align: center;
+            color: #e6e6fa;
+        }
+        
+        .combination-stats {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+        
+        .combination-stats h4 {
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            background: rgba(138, 43, 226, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(138, 43, 226, 0.4);
+        }
+        
+        .stat-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .loading {
+            text-align: center;
+            font-style: italic;
+            color: #dda0dd;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+        
+        .arcana-type {
+            font-size: 12px;
+            color: #ffd700;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .spread-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .card {
+                width: 280px;
+                height: 200px;
+                flex-direction: row;
+                text-align: left;
+            }
+            
+            .card-name {
+                min-height: auto;
+                font-size: 16px;
+            }
+            
+            h1 {
+                font-size: 2.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔮 Tarot Three-Card Spread 🔮</h1>
+        <p class="subtitle">Past • Present • Future - Powered by Story Grammar Combinatorial Rules</p>
+        <p>Discover the mystical connections between cards and their meanings through infinite combinations</p>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="drawNewSpread()" disabled>✨ Draw New Spread</button>
+        <button class="btn" onclick="interpretCombination()" disabled>🌟 Interpret Combination</button>
+        <button class="btn" onclick="clearSpread()">🧹 Clear Reading</button>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        Shuffling the cosmic deck... 🃏
+    </div>
+
+    <div id="spread" class="spread-container" style="display: none;">
+        <div class="card" id="past-card">
+            <div class="card-position">Past</div>
+            <div class="arcana-type" id="past-arcana"></div>
+            <div class="card-name" id="past-name"></div>
+            <div class="card-meaning" id="past-meaning"></div>
+        </div>
+        
+        <div class="card" id="present-card">
+            <div class="card-position">Present</div>
+            <div class="arcana-type" id="present-arcana"></div>
+            <div class="card-name" id="present-name"></div>
+            <div class="card-meaning" id="present-meaning"></div>
+        </div>
+        
+        <div class="card" id="future-card">
+            <div class="card-position">Future</div>
+            <div class="arcana-type" id="future-arcana"></div>
+            <div class="card-name" id="future-name"></div>
+            <div class="card-meaning" id="future-meaning"></div>
+        </div>
+    </div>
+
+    <div id="interpretation" class="interpretation" style="display: none;">
+        <h3>🌙 Three-Card Reading Interpretation 🌙</h3>
+        <div class="interpretation-text" id="interpretation-text"></div>
+    </div>
+
+    <div id="stats" class="combination-stats" style="display: none;">
+        <h4>📊 Combination Statistics</h4>
+        <p>Total possible combinations: <strong>78³ = 474,552</strong></p>
+        <div class="stat-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="major-count">0</div>
+                <div>Major Arcana</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="minor-count">0</div>
+                <div>Minor Arcana</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="readings-count">0</div>
+                <div>Readings Done</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Story Grammar from local copy -->
+    <script src="./dist/story-grammar.bundle.js"></script>
+    
+    <script>
+        // Global variables
+        let parser;
+        let readingsCount = 0;
+        let currentSpread = {};
+
+        // Wait for Story Grammar to load
+        function waitForStoryGrammar() {
+            return new Promise((resolve, reject) => {
+                const maxAttempts = 50;
+                let attempts = 0;
+                
+                const checkLoaded = () => {
+                    attempts++;
+                    if (typeof StoryGrammar !== 'undefined' && StoryGrammar.Parser) {
+                        resolve();
+                    } else if (attempts >= maxAttempts) {
+                        reject(new Error('Story Grammar library failed to load'));
+                    } else {
+                        setTimeout(checkLoaded, 100);
+                    }
+                };
+                
+                checkLoaded();
+            });
+        }
+
+        // Initialize the Story Grammar parser
+        async function initializeParser() {
+            try {
+                console.log('Waiting for Story Grammar to load...');
+                await waitForStoryGrammar();
+                console.log('Story Grammar loaded successfully!');
+
+                parser = new StoryGrammar.Parser();
+                
+                // Load English modifiers
+                try {
+                    if (StoryGrammar.EnglishArticleModifier) {
+                        parser.loadModifier(StoryGrammar.EnglishArticleModifier);
+                    }
+                    if (StoryGrammar.EnglishPluralizationModifier) {
+                        parser.loadModifier(StoryGrammar.EnglishPluralizationModifier);
+                    }
+                } catch (modifierError) {
+                    console.error('Error loading modifiers:', modifierError);
+                }
+
+                setupTarotGrammar();
+                
+                // Enable buttons
+                const buttons = document.querySelectorAll('.btn');
+                buttons.forEach(btn => btn.disabled = false);
+                
+            } catch (error) {
+                console.error('Error initializing Story Grammar:', error);
+                alert('Error loading Story Grammar. Please refresh the page.');
+            }
+        }
+        
+        // Define the tarot grammar with combinatorial rules
+        function setupTarotGrammar() {
+            // Major Arcana cards (22 cards)
+            parser.addRule('major_arcana_names', [
+                'The Fool', 'The Magician', 'The High Priestess', 'The Empress', 'The Emperor',
+                'The Hierophant', 'The Lovers', 'The Chariot', 'Strength', 'The Hermit',
+                'Wheel of Fortune', 'Justice', 'The Hanged Man', 'Death', 'Temperance',
+                'The Devil', 'The Tower', 'The Star', 'The Moon', 'The Sun',
+                'Judgement', 'The World'
+            ]);
+
+            // Minor Arcana suits and ranks
+            parser.addRule('suits', ['Cups', 'Wands', 'Swords', 'Pentacles']);
+            parser.addRule('court_cards', ['Page', 'Knight', 'Queen', 'King']);
+            parser.addRule('pip_cards', ['Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']);
+
+            // Create combinatorial rules for Minor Arcana using template syntax
+            parser.addRule('minor_arcana_names', ['%pip_cards% of %suits%']);
+            parser.addRule('court_arcana_names', ['%court_cards% of %suits%']);
+
+            // All tarot cards using weighted selection (Major Arcana slightly less common)
+            parser.addWeightedRule('tarot_card', 
+                ['%major_arcana_names%', '%minor_arcana_names%', '%court_arcana_names%'], 
+                [0.25, 0.55, 0.20] // 25% Major, 55% Pip, 20% Court
+            );
+
+            // Card meanings by suit and type
+            parser.addRule('cups_meanings', [
+                'emotions and relationships', 'love and intuition', 'spiritual connections',
+                'emotional healing', 'inner wisdom', 'psychic abilities'
+            ]);
+
+            parser.addRule('wands_meanings', [
+                'passion and creativity', 'inspiration and energy', 'spiritual growth',
+                'personal power', 'new beginnings', 'career advancement'
+            ]);
+
+            parser.addRule('swords_meanings', [
+                'mental clarity', 'communication challenges', 'intellectual pursuits',
+                'conflict resolution', 'truth and justice', 'difficult decisions'
+            ]);
+
+            parser.addRule('pentacles_meanings', [
+                'material prosperity', 'career success', 'financial stability',
+                'practical matters', 'earthly pleasures', 'physical health'
+            ]);
+
+            // Major Arcana meanings
+            parser.addRule('major_meanings', [
+                'major life transformation', 'spiritual awakening', 'karmic lessons',
+                'soul purpose', 'divine intervention', 'life-changing events',
+                'deep inner wisdom', 'universal truths', 'spiritual journey'
+            ]);
+
+            // Court card meanings  
+            parser.addRule('court_meanings', [
+                'a significant person', 'personal qualities to develop', 'external influences',
+                'aspects of personality', 'someone entering your life', 'inner guidance'
+            ]);
+
+            // Positional meanings for three-card spread
+            parser.addRule('past_influences', [
+                'foundation from your past', 'lessons learned', 'karmic influences',
+                'childhood experiences', 'past relationships', 'previous decisions',
+                'inherited wisdom', 'ancestral patterns', 'formative experiences'
+            ]);
+
+            parser.addRule('present_situation', [
+                'current energy surrounding you', 'immediate challenges', 'present opportunities',
+                'what needs attention now', 'current state of mind', 'present relationships',
+                'ongoing situations', 'current life focus', 'immediate decisions'
+            ]);
+
+            parser.addRule('future_potential', [
+                'likely outcome', 'future possibilities', 'what is approaching',
+                'potential manifestations', 'upcoming opportunities', 'future challenges',
+                'destiny calling', 'emerging patterns', 'forthcoming changes'
+            ]);
+
+            // Combination interpretation templates using template syntax
+            parser.addRule('card_combination_themes', [
+                '%past_influences%, leading to %present_situation%, which creates %future_potential%'
+            ]);
+
+            // Energy flow interpretations
+            parser.addRule('energy_flow', [
+                'creates a powerful momentum', 'suggests careful reflection', 'indicates swift action needed',
+                'reveals hidden connections', 'shows divine timing', 'demands inner balance',
+                'calls for courage', 'requires patience', 'brings unexpected blessings'
+            ]);
+
+            // Overall reading themes
+            parser.addRule('reading_themes', [
+                'transformation and growth', 'love and relationships', 'career and ambition',
+                'spiritual development', 'healing and recovery', 'new beginnings',
+                'completion and fulfillment', 'challenges and obstacles', 'hidden knowledge'
+            ]);
+
+            // Advice based on card combinations
+            parser.addRule('spiritual_advice', [
+                'Trust your intuition and inner wisdom', 'Embrace the changes coming your way',
+                'Focus on balance in all areas of life', 'Release what no longer serves you',
+                'Open your heart to new possibilities', 'Seek harmony between mind and spirit',
+                'Take inspired action toward your goals', 'Practice patience with the divine timing',
+                'Connect with your higher purpose', 'Find strength in your spiritual practice'
+            ]);
+
+            // Create dynamic interpretation using template syntax
+            parser.addRule('full_interpretation', [
+                'The cards reveal %card_combination_themes%, which %energy_flow%. This reading focuses on %reading_themes%. %spiritual_advice%.'
+            ]);
+        }
+
+        // Get card type for statistics
+        function getCardType(cardName) {
+            const majorArcana = [
+                'The Fool', 'The Magician', 'The High Priestess', 'The Empress', 'The Emperor',
+                'The Hierophant', 'The Lovers', 'The Chariot', 'Strength', 'The Hermit',
+                'Wheel of Fortune', 'Justice', 'The Hanged Man', 'Death', 'Temperance',
+                'The Devil', 'The Tower', 'The Star', 'The Moon', 'The Sun',
+                'Judgement', 'The World'
+            ];
+            
+            return majorArcana.includes(cardName) ? 'major' : 'minor';
+        }
+
+        // Get appropriate meaning based on card type
+        function getCardMeaning(cardName) {
+            if (getCardType(cardName) === 'major') {
+                return parser.parse('%major_meanings%');
+            } else if (cardName.includes('Page') || cardName.includes('Knight') || 
+                       cardName.includes('Queen') || cardName.includes('King')) {
+                return parser.parse('%court_meanings%');
+            } else if (cardName.includes('Cups')) {
+                return parser.parse('%cups_meanings%');
+            } else if (cardName.includes('Wands')) {
+                return parser.parse('%wands_meanings%');
+            } else if (cardName.includes('Swords')) {
+                return parser.parse('%swords_meanings%');
+            } else if (cardName.includes('Pentacles')) {
+                return parser.parse('%pentacles_meanings%');
+            } else {
+                return parser.parse('%major_meanings%');
+            }
+        }
+
+        // Draw a new three-card spread
+        function drawNewSpread() {
+            if (!parser) {
+                console.error('Parser not initialized yet');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const spread = document.getElementById('spread');
+            const interpretation = document.getElementById('interpretation');
+            
+            // Show loading
+            loading.style.display = 'block';
+            spread.style.display = 'none';
+            interpretation.style.display = 'none';
+
+            setTimeout(() => {
+                try {
+                    // Draw three cards
+                    const pastCard = parser.parse('%tarot_card%');
+                    const presentCard = parser.parse('%tarot_card%');
+                    const futureCard = parser.parse('%tarot_card%');
+
+                    // Store current spread
+                    currentSpread = {
+                        past: pastCard,
+                        present: presentCard,
+                        future: futureCard
+                    };
+
+                    // Update display
+                    document.getElementById('past-name').textContent = pastCard;
+                    document.getElementById('present-name').textContent = presentCard;
+                    document.getElementById('future-name').textContent = futureCard;
+
+                    // Update arcana types
+                    document.getElementById('past-arcana').textContent = 
+                        getCardType(pastCard) === 'major' ? 'Major Arcana' : 'Minor Arcana';
+                    document.getElementById('present-arcana').textContent = 
+                        getCardType(presentCard) === 'major' ? 'Major Arcana' : 'Minor Arcana';
+                    document.getElementById('future-arcana').textContent = 
+                        getCardType(futureCard) === 'major' ? 'Major Arcana' : 'Minor Arcana';
+
+                    // Update meanings
+                    document.getElementById('past-meaning').textContent = getCardMeaning(pastCard);
+                    document.getElementById('present-meaning').textContent = getCardMeaning(presentCard);
+                    document.getElementById('future-meaning').textContent = getCardMeaning(futureCard);
+
+                    // Update statistics
+                    updateStatistics();
+
+                    // Hide loading and show spread
+                    loading.style.display = 'none';
+                    spread.style.display = 'flex';
+                    document.getElementById('stats').style.display = 'block';
+
+                    readingsCount++;
+                    document.getElementById('readings-count').textContent = readingsCount;
+
+                } catch (error) {
+                    console.error('Error drawing spread:', error);
+                    loading.textContent = 'Error drawing cards. Please try again.';
+                }
+            }, 1000);
+        }
+
+        // Interpret the current combination
+        function interpretCombination() {
+            if (!currentSpread.past) {
+                alert('Please draw cards first!');
+                return;
+            }
+
+            try {
+                const interpretation = parser.parse('%full_interpretation%');
+                document.getElementById('interpretation-text').textContent = interpretation;
+                document.getElementById('interpretation').style.display = 'block';
+
+                // Smooth scroll to interpretation
+                document.getElementById('interpretation').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+
+            } catch (error) {
+                console.error('Error generating interpretation:', error);
+                document.getElementById('interpretation-text').textContent = 
+                    'Error generating interpretation. Please try drawing new cards.';
+                document.getElementById('interpretation').style.display = 'block';
+            }
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            let majorCount = 0;
+            let minorCount = 0;
+
+            [currentSpread.past, currentSpread.present, currentSpread.future].forEach(card => {
+                if (getCardType(card) === 'major') {
+                    majorCount++;
+                } else {
+                    minorCount++;
+                }
+            });
+
+            document.getElementById('major-count').textContent = majorCount;
+            document.getElementById('minor-count').textContent = minorCount;
+        }
+
+        // Clear the spread
+        function clearSpread() {
+            document.getElementById('spread').style.display = 'none';
+            document.getElementById('interpretation').style.display = 'none';
+            document.getElementById('stats').style.display = 'none';
+            currentSpread = {};
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Disable buttons initially
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(btn => btn.disabled = true);
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loading').textContent = 'Loading mystical energies...';
+            
+            // Initialize parser
+            initializeParser().then(() => {
+                document.getElementById('loading').style.display = 'none';
+                console.log('Tarot Three-Card Spread ready!');
+            }).catch(error => {
+                document.getElementById('loading').textContent = 'Error loading. Please refresh the page.';
+                document.getElementById('loading').style.color = 'red';
+                console.error('Failed to initialize:', error);
+            });
+        });
+    </script>
+</body>
+</html>

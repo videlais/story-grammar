@@ -4,6 +4,127 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Story Grammar - Interactive Examples</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 3em;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header p {
+            font-size: 1.3em;
+            color: #555;
+            margin: 10px 0;
+        }
+        
+        .subtitle {
+            font-style: italic;
+            color: #777;
+            margin: 20px 0;
+            font-size: 1.1em;
+        }
+        
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .example-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+        
+        .example-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .example-description {
+            font-size: 1em;
+            line-height: 1.5;
+            opacity: 0.95;
+        }
+        
+        .features-list {
+            margin-top: 15px;
+            padding-left: 20px;
+        }
+        
+        .features-list li {
+            margin: 5px 0;
+        }
+        
+        .coming-soon {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 12px;
+            color: #8b4513;
+        }
+        
+        .coming-soon h3 {
+            color: #d2691e;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2.2em;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -13,7 +134,43 @@
             <div class="subtitle">
                 Explore the power of combinatorial grammar for generative and narrative-based projects.
             </div>
-            <p>Coming soon: more interactive examples and detailed documentation.</p>
+        </div>
+
+        <div class="examples-grid">
+            <a href="tarot-three-card-spread.html" class="example-card">
+                <div class="example-title">
+                    🔮 Tarot Three-Card Spread
+                </div>
+                <div class="example-description">
+                    Generate mystical three-card tarot readings with Past • Present • Future spreads using Story Grammar's combinatorial rules.
+                    <ul class="features-list">
+                        <li>Complete 78-card tarot deck (Major & Minor Arcana)</li>
+                        <li>Dynamic card combinations and interpretations</li>
+                        <li>Suit-specific meanings and positional context</li>
+                        <li>474,552 possible combinations</li>
+                    </ul>
+                </div>
+            </a>
+
+            <a href="weapon-loot-generator.html" class="example-card">
+                <div class="example-title">
+                    ⚔️ Weapon Loot Table Generator
+                </div>
+                <div class="example-description">
+                    Generate RPG weapon loot with authentic rarity distribution using Story Grammar's weighted rules system.
+                    <ul class="features-list">
+                        <li>17 weapon types including throwing weapons</li>
+                        <li>Realistic drop rates: Common (38.06%), Magic (50%), Rare (10.44%), Unique (1.5%)</li>
+                        <li>Dynamic stats and special effects by rarity</li>
+                        <li>Color-coded rarity system with visual effects</li>
+                    </ul>
+                </div>
+            </a>
+        </div>
+
+        <div class="coming-soon">
+            <h3>🚀 More Examples Coming Soon</h3>
+            <p>We're working on additional interactive examples including D&D encounter generators, fantasy kingdom builders, weighted rules demonstrations, and comprehensive API documentation.</p>
         </div>
     </div>
 </body>
