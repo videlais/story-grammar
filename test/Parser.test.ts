@@ -1,4 +1,5 @@
 import { Parser } from '../src/Parser';
+import { EnglishArticleModifier, EnglishPluralizationModifier, EnglishOrdinalModifier } from '../src/EnglishModifiers';
 
 describe('Parser with % symbols', () => {
   let parser: Parser;
@@ -59,7 +60,7 @@ describe('Parser with % symbols', () => {
     });
 
     it('should handle built-in article modifier (a/an)', () => {
-      parser.addEnglishArticleModifier();
+      parser.loadModifier(EnglishArticleModifier);
       
       parser.addRule('items', ['apple', 'tree', 'umbrella', 'house']);
       const text = 'I found a %items%.';
@@ -115,7 +116,7 @@ describe('Parser with % symbols', () => {
     });
 
     it('should handle complex article scenarios', () => {
-      parser.addEnglishArticleModifier();
+      parser.loadModifier(EnglishArticleModifier);
       
       parser.addRule('adjectives', ['old', 'ugly', 'ancient']);
       parser.addRule('nouns', ['apple', 'tree', 'elephant', 'igloo']);
@@ -203,7 +204,7 @@ describe('Parser with % symbols', () => {
     });
 
     it('should handle built-in pluralization modifier', () => {
-      parser.addEnglishPluralizationModifier();
+      parser.loadModifier(EnglishPluralizationModifier);
       
       parser.addRule('nouns', ['cat', 'dog', 'child', 'box', 'fly', 'leaf']);
       
@@ -228,7 +229,7 @@ describe('Parser with % symbols', () => {
     });
 
     it('should handle pluralization with variables', () => {
-      parser.addEnglishPluralizationModifier();
+      parser.loadModifier(EnglishPluralizationModifier);
       
       parser.addRule('animals', ['cat', 'dog', 'mouse', 'child']);
       parser.addRule('quantities', ['many', 'several', 'three', 'five']);
@@ -243,7 +244,7 @@ describe('Parser with % symbols', () => {
     });
 
     it('should handle built-in ordinal modifier', () => {
-      parser.addEnglishOrdinalModifier();
+      parser.loadModifier(EnglishOrdinalModifier);
       
       // Test regular ordinal rules
       expect(parser.parse('The 1 place winner')).toBe('The 1st place winner');
@@ -270,7 +271,7 @@ describe('Parser with % symbols', () => {
     });
 
     it('should handle ordinals with variables', () => {
-      parser.addEnglishOrdinalModifier();
+      parser.loadModifier(EnglishOrdinalModifier);
       
       parser.addRule('positions', ['1', '2', '3', '11', '21', '22']);
       parser.addRule('contests', ['race', 'competition', 'tournament']);

@@ -12,7 +12,10 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-s            // Add some range-based rules for dynamic values
+            parser.addRangeRule('gold_amount', { min: 10, max: 500, type: 'integer' }); // 10-500 gold pieces
+            parser.addRangeRule('gem_value', { min: 50, max: 1000, type: 'integer' });  // 50-1000 gold value
+            parser.addRangeRule('party_level', { min: 1, max: 10, type: 'integer' });   // Character levels 1-10;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
@@ -294,8 +297,8 @@
         </div>
     </div>
 
-    <!-- Load Story Grammar from CDN -->
-    <script src="https://cdn.jsdelivr.net/gh/videlais/story-grammar@main/dist/story-grammar.bundle.js"></script>
+    <!-- Load Story Grammar from local bundle -->
+    <script src="../dist/story-grammar.bundle.js"></script>
     
     <script>
         // Global variables
@@ -341,10 +344,10 @@
 
         // Setup Story Grammar rules for D&D encounters
         function setupGrammarRules() {
-            // Add built-in English modifiers
-            parser.addEnglishArticleModifier();
-            parser.addEnglishPluralizationModifier();
-            parser.addEnglishOrdinalModifier();
+            // Load built-in English modifiers using new API
+            parser.loadModifier(StoryGrammar.EnglishArticleModifier);
+            parser.loadModifier(StoryGrammar.EnglishPluralizationModifier);
+            parser.loadModifier(StoryGrammar.EnglishOrdinalModifier);
 
             // Filter monsters by challenge rating for balanced encounters
             const easyMonsters = monsters.filter(m => getChallengeRatingValue(m.properties?.['Challenge Rating']) <= 2);
@@ -406,9 +409,9 @@
             ]);
 
             // Add range rules for dynamic values
-            parser.addRangeRule('gold_amount', 10, 500, true); // 10-500 gold pieces
-            parser.addRangeRule('gem_value', 50, 1000, true);  // 50-1000 gold value
-            parser.addRangeRule('party_level', 1, 10, true);   // Character levels 1-10
+            parser.addRangeRule('gold_amount', { min: 10, max: 500, type: 'integer' }); // 10-500 gold pieces
+            parser.addRangeRule('gem_value', { min: 50, max: 1000, type: 'integer' });  // 50-1000 gold value
+            parser.addRangeRule('party_level', { min: 1, max: 10, type: 'integer' });   // Character levels 1-10
 
             // Sequential rule for encounter progression
             parser.addSequentialRule('encounter_number', ['First', 'Second', 'Third', 'Fourth', 'Fifth']);
@@ -437,13 +440,7 @@
                 ['location', 'difficulty', 'monster', 'motivation', 'complication', 'reward']
             );
 
-            // Map template slots to existing rules
-            parser.addReferenceRule('location', 'locations');
-            parser.addReferenceRule('monster', 'selected_monster');
-            parser.addReferenceRule('motivation', 'motivations');
-            parser.addReferenceRule('complication', 'complications');
-            parser.addReferenceRule('reward', 'rewards');
-            parser.addReferenceRule('difficulty', 'encounter_difficulty');
+                        // Note: Reference functionality is built-in - no explicit mapping needed\n            // Template slots will automatically reference existing rules by name
         }
 
         // Convert challenge rating string to numeric value

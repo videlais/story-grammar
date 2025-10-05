@@ -191,18 +191,17 @@
 
     <div id="generations" class="generation-container"></div>
 
-    <!-- Load Story Grammar from CDN (using jsDelivr as example) -->
-    <!-- Note: Replace this URL with your actual published CDN URL -->
-    <script src="https://cdn.jsdelivr.net/gh/videlais/story-grammar@main/dist/story-grammar.bundle.js"></script>
+    <!-- Load Story Grammar from local bundle -->
+    <script src="../dist/story-grammar.bundle.js"></script>
     
     <script>
         // Initialize the Story Grammar parser
         const parser = new StoryGrammar.Parser();
         
-        // Add English language modifiers
-        parser.addEnglishArticleModifier();
-        parser.addEnglishPluralizationModifier();
-        parser.addEnglishOrdinalModifier();
+        // Load English language modifiers using new API
+        parser.loadModifier(StoryGrammar.EnglishArticleModifier);
+        parser.loadModifier(StoryGrammar.EnglishPluralizationModifier);
+        parser.loadModifier(StoryGrammar.EnglishOrdinalModifier);
         
         // Define the fantasy kingdom grammar
         function setupFantasyGrammar() {
@@ -213,7 +212,7 @@
             );
 
             // Add range rule for reign years
-            parser.addRangeRule('reign_years', 5, 35, true); // 5-35 years
+            parser.addRangeRule('reign_years', { min: 5, max: 35, type: 'integer' }); // 5-35 years
 
             // Add sequential rule for dynasty tracking
             parser.addSequentialRule('dynasty_era', [
@@ -337,22 +336,15 @@
                 ['era', 'trait', 'kingdom', 'title', 'ruler', 'years']
             );
             
-            // Reference rules for template slots
-            parser.addReferenceRule('era', 'dynasty_era');
-            parser.addReferenceRule('trait', 'kingdom_traits');
-            parser.addReferenceRule('kingdom', 'kingdom_names');
-            parser.addReferenceRule('title', 'ruler_titles');
-            parser.addReferenceRule('ruler', 'ruler_names');
-            parser.addReferenceRule('years', 'reign_years');
+            // Template references are handled automatically
+            // No explicit reference rules needed - templates will find rules by name
             
             parser.addTemplateRule('kingdom_middle',
                 'During this time, the ruler {event} and {bonus}. The kingdom became renowned for its {feature}.',
                 ['event', 'bonus', 'feature']
             );
             
-            parser.addReferenceRule('event', 'reign_events');
-            parser.addReferenceRule('bonus', 'trait_bonus_event');
-            parser.addReferenceRule('feature', 'kingdom_features');
+            // Additional template references handled automatically
             
             parser.addRule('murder_ending', [
                 'However, the reign came to a bloody end when %ruler_titles% %ruler_names% was %murder_methods%.',

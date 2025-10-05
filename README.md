@@ -31,9 +31,9 @@ This project is heavily inspired by the great work Kate Compton did and continue
     - [Story Generation](#story-generation)
     - [Error Handling](#error-handling)
   - [Built-in Modifiers](#built-in-modifiers)
-    - [English Article Correction](#english-article-correction)
-    - [English Pluralization](#english-pluralization)
-    - [English Ordinal Numbers](#english-ordinal-numbers)
+    - [Loading Individual Modifiers](#loading-individual-modifiers)
+    - [Loading All English Modifiers](#loading-all-english-modifiers)
+    - [Basic English Modifiers](#basic-english-modifiers)
   - [Modifier System](#modifier-system)
     - [Modifier Features](#modifier-features)
     - [Adding Custom Modifiers](#adding-custom-modifiers)
@@ -42,9 +42,23 @@ This project is heavily inspired by the great work Kate Compton did and continue
     - [Management Methods](#management-methods)
     - [Priority System](#priority-system)
   - [Built-in Modifiers Reference](#built-in-modifiers-reference)
-    - [English Articles (`addEnglishArticleModifier()`)](#english-articles-addenglisharticlemodifier)
-    - [English Pluralization (`addEnglishPluralizationModifier()`)](#english-pluralization-addenglishpluralizationmodifier)
-    - [English Ordinals (`addEnglishOrdinalModifier()`)](#english-ordinals-addenglishordinalmodifier)
+    - [English Articles (`EnglishArticleModifier`)](#english-articles-englisharticlemodifier)
+    - [English Pluralization (`EnglishPluralizationModifier`)](#english-pluralization-englishpluralizationmodifier)
+    - [English Ordinals (`EnglishOrdinalModifier`)](#english-ordinals-englishordinalmodifier)
+    - [English Capitalization (`EnglishCapitalizationModifier`)](#english-capitalization-englishcapitalizationmodifier)
+    - [English Possessives (`EnglishPossessiveModifier`)](#english-possessives-englishpossessivemodifier)
+    - [English Verb Agreement (`EnglishVerbAgreementModifier`)](#english-verb-agreement-englishverbagreementmodifier)
+    - [Emphasis Modifier (`EmphasisModifier`)](#emphasis-modifier-emphasismodifier)
+    - [Punctuation Cleanup (`PunctuationCleanupModifier`)](#punctuation-cleanup-punctuationcleanupmodifier)
+  - [Performance and Utility Features](#performance-and-utility-features)
+    - [Batch Processing](#batch-processing)
+    - [Variation Generation](#variation-generation)
+    - [Performance Monitoring](#performance-monitoring)
+    - [Parser Analysis and Optimization](#parser-analysis-and-optimization)
+  - [Enhanced Error Handling](#enhanced-error-handling)
+    - [Safe Parsing](#safe-parsing)
+    - [Rule Analysis](#rule-analysis)
+    - [Helpful Error Messages](#helpful-error-messages)
   - [Build and Deployment](#build-and-deployment)
     - [TypeScript Build](#typescript-build)
     - [Webpack Bundle](#webpack-bundle)
@@ -61,7 +75,8 @@ This project is heavily inspired by the great work Kate Compton did and continue
       - [Reference Rule Methods](#reference-rule-methods)
       - [Parsing](#parsing)
       - [Modifiers](#modifiers)
-      - [Built-in Modifier Methods](#built-in-modifier-methods)
+      - [Modifier Loading Methods](#modifier-loading-methods)
+      - [Available English Modifiers](#available-english-modifiers)
       - [Configuration](#configuration)
     - [Types](#types)
   - [Interactive Examples](#interactive-examples)
@@ -412,23 +427,23 @@ if (!validation.isValid) {
 
 ## Built-in Modifiers
 
-The parser includes built-in English language modifiers for common transformations:
+The parser uses a modular modifier system that allows loading language-specific modifiers as needed:
 
-### English Article Correction
+### Loading Individual Modifiers
 
 ```typescript
-parser.addEnglishArticleModifier();
+import { Parser, EnglishArticleModifier, EnglishPluralizationModifier } from 'story-grammar';
+
+const parser = new Parser();
+
+// Load specific modifiers
+parser.loadModifier(EnglishArticleModifier);
+parser.loadModifier(EnglishPluralizationModifier);
 
 // Automatically corrects "a" to "an" before vowel sounds
 parser.addRule('items', ['a elephant', 'a umbrella', 'a house']);
 console.log(parser.parse('%items%')); 
 // Outputs: "an elephant", "an umbrella", "a house"
-```
-
-### English Pluralization
-
-```typescript
-parser.addEnglishPluralizationModifier();
 
 // Automatically pluralizes nouns with quantity indicators
 parser.addRule('animals', ['cat', 'dog', 'mouse', 'child']);
@@ -436,15 +451,37 @@ console.log(parser.parse('I saw many %animals%'));
 // Outputs: "I saw many cats", "I saw many dogs", "I saw many mice", "I saw many children"
 ```
 
-### English Ordinal Numbers
+### Loading All English Modifiers
 
 ```typescript
-parser.addEnglishOrdinalModifier();
+import { Parser, AllEnglishModifiers } from 'story-grammar';
 
-// Automatically converts cardinal numbers to ordinal format
-parser.addRule('positions', ['1', '2', '3', '21', '22']);
-console.log(parser.parse('I finished in %positions% place')); 
-// Outputs: "I finished in 1st place", "I finished in 2nd place", "I finished in 21st place"
+const parser = new Parser();
+
+// Load all English modifiers at once
+parser.loadModifiers(AllEnglishModifiers);
+
+// Now all English language features are available:
+// - Article correction (a/an)
+// - Pluralization (many cats)
+// - Ordinals (1st, 2nd, 3rd)
+// - Capitalization (sentence starts)
+// - Possessives (John's car)
+// - Verb agreement (he is, they are)
+// - Punctuation cleanup
+// - Emphasis markers
+```
+
+### Basic English Modifiers
+
+```typescript
+import { Parser, BasicEnglishModifiers } from 'story-grammar';
+
+const parser = new Parser();
+
+// Load only core modifiers for performance
+parser.loadModifiers(BasicEnglishModifiers);
+// Includes: articles, pluralization, ordinals
 ```
 
 ## Modifier System
@@ -513,13 +550,30 @@ This ensures that language-specific transformations (articles, plurals, ordinals
 
 ## Built-in Modifiers Reference
 
-### English Articles (`addEnglishArticleModifier()`)
+All English modifiers are available as separate imports and can be loaded individually or in groups:
+
+```typescript
+import { 
+  EnglishArticleModifier,
+  EnglishPluralizationModifier,
+  EnglishOrdinalModifier,
+  EnglishCapitalizationModifier,
+  EnglishPossessiveModifier,
+  EnglishVerbAgreementModifier,
+  EmphasisModifier,
+  PunctuationCleanupModifier,
+  AllEnglishModifiers,
+  BasicEnglishModifiers
+} from 'story-grammar';
+```
+
+### English Articles (`EnglishArticleModifier`)
 
 - **Priority**: 10
 - **Function**: Converts "a" to "an" before vowel sounds
 - **Examples**: "a elephant" → "an elephant", "a umbrella" → "an umbrella"
 
-### English Pluralization (`addEnglishPluralizationModifier()`)
+### English Pluralization (`EnglishPluralizationModifier`)
 
 - **Priority**: 9
 - **Function**: Pluralizes nouns when quantity indicators are present
@@ -532,7 +586,7 @@ This ensures that language-specific transformations (articles, plurals, ordinals
   - Irregular: "child" → "children", "mouse" → "mice"
 - **Examples**: "three cat" → "three cats", "many child" → "many children"
 
-### English Ordinals (`addEnglishOrdinalModifier()`)
+### English Ordinals (`EnglishOrdinalModifier`)
 
 - **Priority**: 8
 - **Function**: Converts cardinal numbers to ordinal format
@@ -544,6 +598,174 @@ This ensures that language-specific transformations (articles, plurals, ordinals
   - Exception - 11, 12, 13: "11" → "11th", "112" → "112th"
   - All others: "4" → "4th", "100" → "100th"
 - **Examples**: "1 place" → "1st place", "22 floor" → "22nd floor"
+
+### English Capitalization (`EnglishCapitalizationModifier`)
+
+- **Priority**: 7
+- **Function**: Capitalizes words after sentence-ending punctuation
+- **Triggers**: Lowercase letters following periods, exclamation marks, or question marks
+- **Examples**: "hello. world" → "hello. World", "what? yes!" → "what? Yes!"
+
+### English Possessives (`EnglishPossessiveModifier`)
+
+- **Priority**: 6
+- **Function**: Handles English possessive forms
+- **Triggers**: "possessive" marker and malformed possessives
+- **Rules**:
+  - Regular nouns: "John possessive" → "John's"
+  - Plural nouns: "boys possessive" → "boys'"
+  - Fix doubles: "John's's" → "John's"
+- **Examples**: "cat possessive toy" → "cat's toy"
+
+### English Verb Agreement (`EnglishVerbAgreementModifier`)
+
+- **Priority**: 5
+- **Function**: Fixes basic subject-verb agreement
+- **Triggers**: Mismatched subjects and verbs (is/are, has/have)
+- **Rules**:
+  - Singular subjects: "he are" → "he is", "she have" → "she has"
+  - Plural/quantified subjects: "they is" → "they are", "many has" → "many have"
+- **Examples**: "he are happy" → "he is happy", "many is here" → "many are here"
+
+### Emphasis Modifier (`EmphasisModifier`)
+
+- **Priority**: 4
+- **Function**: Converts emphasis markers to formatting
+- **Triggers**: Emphasis tags in text
+- **Markers**:
+  - `[bold]text[/bold]` → `**text**`
+  - `[italic]text[/italic]` → `*text*`
+  - `[caps]text[/caps]` → `TEXT`
+  - `[emphasis]text[/emphasis]` → `***text***`
+- **Examples**: "[bold]important[/bold]" → "**important**"
+
+### Punctuation Cleanup (`PunctuationCleanupModifier`)
+
+- **Priority**: 1
+- **Function**: Fixes common punctuation and spacing issues
+- **Triggers**: Multiple spaces, incorrect punctuation spacing
+- **Rules**:
+  - Multiple spaces → single space
+  - Space before punctuation → removed
+  - Missing space after punctuation → added
+  - Trim leading/trailing whitespace
+- **Examples**: "hello  ,  world" → "hello, world"
+
+## Performance and Utility Features
+
+### Batch Processing
+
+Process multiple texts efficiently with shared context:
+
+```typescript
+const texts = [
+  'I saw a %animal%',
+  'The %animal% was %color%',
+  'It ran %direction%'
+];
+
+const results = parser.parseBatch(texts, true); // preserve context
+// Results will use consistent values across all texts
+```
+
+### Variation Generation
+
+Generate multiple variations for testing or options:
+
+```typescript
+// Generate 5 variations with consistent seed
+const variations = parser.generateVariations('%greeting% %name%!', 5, 12345);
+console.log(variations);
+// ["Hello Alice!", "Hi Bob!", "Hey Charlie!", "Hello David!", "Hi Eve!"]
+```
+
+### Performance Monitoring
+
+Monitor parsing performance with detailed timing:
+
+```typescript
+const result = parser.parseWithTiming('%complex_rule%');
+console.log(`Total: ${result.timing.totalMs}ms`);
+console.log(`Expansion: ${result.timing.expansionMs}ms`);
+console.log(`Modifiers: ${result.timing.modifierMs}ms`);
+```
+
+### Parser Analysis and Optimization
+
+Analyze your parser for optimization opportunities:
+
+```typescript
+// Get statistics
+const stats = parser.getStats();
+console.log(`Total rules: ${stats.totalRules}`);
+console.log(`Rule breakdown:`, stats.rulesByType);
+
+// Analyze complexity
+const analysis = parser.analyzeRules();
+console.log(`Most complex rules:`, analysis.mostComplex);
+console.log(`Suggestions:`, analysis.suggestions);
+
+// Get optimization recommendations
+const optimization = parser.optimize();
+if (!optimization.optimized) {
+  console.log('Warnings:', optimization.warnings);
+  console.log('Suggestions:', optimization.suggestions);
+}
+```
+
+## Enhanced Error Handling
+
+### Safe Parsing
+
+Parse with automatic error recovery and detailed diagnostics:
+
+```typescript
+const result = parser.safeParse('%potentially_problematic%', {
+  validateFirst: true,    // Validate rules before parsing
+  maxAttempts: 3,        // Retry with reduced complexity
+  preserveContext: false
+});
+
+if (result.success) {
+  console.log('Result:', result.result);
+  console.log('Attempts needed:', result.attempts);
+} else {
+  console.log('Error:', result.error);
+  if (result.validation) {
+    console.log('Missing rules:', result.validation.missingRules);
+  }
+}
+```
+
+### Rule Analysis
+
+Analyze individual rules for complexity and issues:
+
+```typescript
+// Analyze specific rule
+const ruleAnalysis = parser.analyzeRules('complex_rule');
+console.log('Complexity score:', ruleAnalysis.ruleDetails?.complexity);
+console.log('Variables used:', ruleAnalysis.ruleDetails?.variables);
+console.log('Nesting depth:', ruleAnalysis.ruleDetails?.depth);
+```
+
+### Helpful Error Messages
+
+Get detailed error explanations with actionable suggestions:
+
+```typescript
+try {
+  parser.parse('%problematic_rule%');
+} catch (error) {
+  const helpfulMessage = parser.getHelpfulError(error, {
+    text: '%problematic_rule%',
+    ruleName: 'problematic_rule'
+  });
+  
+  console.log(helpfulMessage);
+  // Includes suggestions, validation issues, and troubleshooting tips
+}
+```
 
 ## Build and Deployment
 
@@ -599,8 +821,8 @@ Include the webpack bundle in your HTML:
         parser.addRule('animals', ['cat', 'dog', 'bird']);
         
         // Add modifiers
-        parser.addEnglishArticleModifier();
-        parser.addEnglishPluralizationModifier();
+        parser.loadModifier(EnglishArticleModifier);
+        parser.loadModifier(EnglishPluralizationModifier);
         
         // Generate text
         const story = parser.parse('I saw many %colors% %animals%');
@@ -689,11 +911,29 @@ The library is exposed as `StoryGrammar` global object with the `Parser` class a
 - `getModifiers(): Modifier[]` - Get all modifiers sorted by priority
 - `clearModifiers(): void` - Clear all modifiers
 
-#### Built-in Modifier Methods
+#### Modifier Loading Methods
 
-- `addEnglishArticleModifier()` - Fix a/an articles based on vowel sounds
-- `addEnglishPluralizationModifier()` - Handle English plural forms
-- `addEnglishOrdinalModifier()` - Convert numbers to ordinal form (1st, 2nd, etc.)
+- `loadModifier(modifier: Modifier)` - Load a single modifier
+- `loadModifiers(modifiers: Modifier[])` - Load multiple modifiers
+
+#### Available English Modifiers
+
+All modifiers are available as separate imports:
+
+```typescript
+import {
+  EnglishArticleModifier,       // Fix a/an articles
+  EnglishPluralizationModifier, // Handle English plurals  
+  EnglishOrdinalModifier,       // Convert to ordinals (1st, 2nd)
+  EnglishCapitalizationModifier,// Capitalize after sentences
+  EnglishPossessiveModifier,    // Handle possessives ('s)
+  EnglishVerbAgreementModifier, // Fix subject-verb agreement
+  EmphasisModifier,             // Convert emphasis markers
+  PunctuationCleanupModifier,   // Fix spacing/punctuation
+  AllEnglishModifiers,          // All modifiers array
+  BasicEnglishModifiers         // Core modifiers only
+} from 'story-grammar';
+```
 
 #### Configuration
 
@@ -755,7 +995,7 @@ interface Modifier {
 
 ## Interactive Examples
 
-Visit the `docs/` folder for interactive examples demonstrating the Story Grammar library:
+Visit the `docs/` folder for interactive examples demonstrating the Story Grammar library with the new modular modifier API:
 
 - **🏰 Fantasy Kingdom Generator** - [Live Demo](https://videlais.github.io/story-grammar/fantasy-kingdom-example.html) | [Source](docs/fantasy-kingdom-example.html)
   - Interactive generator creating 12 generations of kingdoms with dramatic endings

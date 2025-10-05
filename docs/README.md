@@ -55,14 +55,7 @@ The example loads Story Grammar from CDN:
 ### Grammar Structure Example
 
 ```javascript
-// Kingdom characteristics
-parser.addRule('kingdom_names', ['Valdoria', 'Aethermoor', 'Drakmonia']);
-parser.addRule('ruler_titles', ['King', 'Queen', 'Emperor']);
-
-// Story templates  
-parser.addRule('kingdom_intro', [
-    'In the %kingdom_traits% kingdom of %kingdom_names%, %ruler_titles% %ruler_names% ruled for %reign_years% years.'
-]);
+### Grammar Structure Example\n\n```javascript\n// Kingdom characteristics\nparser.addRule('kingdom_names', ['Valdoria', 'Aethermoor', 'Drakmonia']);\nparser.addRule('ruler_titles', ['King', 'Queen', 'Emperor']);\n\n// Range rules for dynamic values\nparser.addRangeRule('reign_years', { min: 5, max: 50, type: 'integer' });\n\n// Story templates with references\nparser.addRule('kingdom_intro', [\n    'In the %kingdom_traits% kingdom of %kingdom_names%, %ruler_titles% %ruler_names% ruled for %reign_years% years.'\n]);\nparser.addRule('kingdom_continuation', [\n    'Later, %@ruler_titles% %@ruler_names% faced great challenges in %@kingdom_names%.'\n]);\n```
 ```
 
 ### Educational Value
@@ -75,12 +68,7 @@ This example demonstrates:
 - Web integration patterns
 - Interactive storytelling interfaces
 
-Perfect for showcasing the library's capabilities in:
-
-- **Game Development**: Procedural storytelling
-- **Creative Writing**: Inspiration generation
-- **Educational Tools**: Interactive narratives
-- **Web Applications**: Dynamic content creation
+Perfect for showcasing the library's capabilities in:\n\n- **Game Development**: Procedural storytelling\n- **Creative Writing**: Inspiration generation\n- **Educational Tools**: Interactive narratives\n- **Web Applications**: Dynamic content creation\n\n### 🔄 Recent Updates\n\n**API Changes** (Updated in all examples):\n- `addRangeRule()` now uses object syntax: `addRangeRule('name', { min: 1, max: 10, type: 'integer' })`\n- Reference system uses `%@variable%` syntax directly (no `addReferenceRule()` method needed)\n- All examples updated to use current API\n- Enhanced documentation with comprehensive JSDoc comments
 
 ## 🐉 D&D Encounter Generator
 

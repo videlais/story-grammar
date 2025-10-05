@@ -125,22 +125,21 @@ parser.addConditionalRule('name', (context) => {
 // 5. Sequential Rules - Ordered cycling
 parser.addSequentialRule('chapter', ['I', 'II', 'III']);
 
-// 6. Range Rules - Numeric ranges
-parser.addRangeRule('level', 1, 20, true);
+// 6. Range Rules - Numeric ranges\nparser.addRangeRule('level', { min: 1, max: 20, type: 'integer' });
 
 // 7. Template Rules - Structured combinations
 parser.addTemplateRule('intro', '{name} the {class}', ['name', 'class']);
 
 // 8. Reference Rules - Reuse values
-parser.addReferenceRule('character', 'intro');
+// References use @ syntax: parser.parse('@character appears');
 
 // Generate: "Gandalf the Mage appears in Chapter I"
-const result = parser.parse('@character appears in Chapter %chapter%');
+const result = parser.parse('%@character% appears in Chapter %chapter%');
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/story-grammar@latest/dist/bundle.min.js"></script>
+    <script src="../dist/story-grammar.bundle.js"></script>
     <script>
         const parser = new StoryGrammar.Parser();
 
@@ -173,9 +172,9 @@ const result = parser.parse('@character appears in Chapter %chapter%');
         );
 
         // 4. Range Rules - Numeric ranges
-        parser.addRangeRule('level', 1, 20, true);      // Integer levels 1-20
-        parser.addRangeRule('gold', 10, 1000, true);    // Gold pieces
-        parser.addRangeRule('health_percent', 0.1, 1.0, false); // Health as decimal
+        parser.addRangeRule('level', { min: 1, max: 20, type: 'integer' });      // Integer levels 1-20
+        parser.addRangeRule('gold', { min: 10, max: 1000, type: 'integer' });    // Gold pieces
+        parser.addRangeRule('health_percent', { min: 0.1, max: 1.0, type: 'float' }); // Health as decimal
 
         // 5. Sequential Rules - Ordered cycling
         parser.addSequentialRule('chapter', ['Prologue', 'Chapter I', 'Chapter II', 'Chapter III', 'Epilogue']);
@@ -216,20 +215,16 @@ const result = parser.parse('@character appears in Chapter %chapter%');
             ['chapter', 'phase', 'location', 'character', 'action', 'rarity', 'gold']
         );
 
-        // 8. Reference Rules - Reuse previous values
-        parser.addReferenceRule('name', 'character_name');
-        parser.addReferenceRule('class', 'character_class');
-        parser.addReferenceRule('weapon', 'appropriate_weapon');
-        parser.addReferenceRule('character', 'character_intro');
-        parser.addReferenceRule('rarity', 'item_rarity');
+        // 8. Reference Rules - Use @ syntax in templates
+        // References are accessed with @name syntax: '%@name% attacks with %@weapon%'
 
         // Templates showcasing all rule types
         const templates = [
             '🎭 Character: %character_intro%',
             '🌍 Adventure: %adventure_setup%',
-            '⚔️ Combat: @name attacks with @weapon! (Health: %health_percent|multiply:100|round%%)',
+            '⚔️ Combat: %@name% attacks with %@weapon%! (Health: %health_percent%)',
             '🎲 Encounter: %encounter_type% encounter at %timestamp% - Weather: %weather_condition%',
-            '📖 Story: %chapter% begins at %phase% when @character finds %item_rarity% loot!'
+            '📖 Story: %chapter% begins at %phase% when %@character% finds %item_rarity% loot!'
         ];
 
         function generateExamples() {
