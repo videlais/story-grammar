@@ -23,7 +23,7 @@
     "type": "git",
     "url": "git+https://github.com/videlais/story-grammar.git"
   },
-  "keywords": [],
+  "keywords": ["grammar", "story", "narrative", "generator", "procedural", "content generation", "typescript", "javascript"],
   "author": "Dan Cox",
   "license": "MIT",
   "type": "module",
