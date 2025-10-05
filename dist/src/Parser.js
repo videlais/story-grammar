@@ -9,6 +9,8 @@ export class Parser {
         this.modifiers = new Map();
         this.variablePattern = /%([^%]+)%/g;
         this.maxDepth = 100; // Prevent infinite recursion
+        this.randomSeed = null;
+        this.currentSeed = 0;
     }
     /**
      * Add a rule to the grammar
@@ -395,12 +397,26 @@ export class Parser {
         return modifiedText;
     }
     /**
+     * Generate a seeded random number between 0 and 1
+     * Uses Linear Congruential Generator (LCG) when seed is set
+     * @returns Random number between 0 and 1
+     */
+    getSeededRandom() {
+        if (this.randomSeed === null) {
+            return Math.random();
+        }
+        // Linear Congruential Generator (LCG)
+        // Using parameters from Numerical Recipes: a=1664525, c=1013904223, m=2^32
+        this.currentSeed = (this.currentSeed * 1664525 + 1013904223) >>> 0;
+        return this.currentSeed / 0x100000000; // Convert to 0-1 range
+    }
+    /**
      * Get a random value from an array
      * @param values - Array of values to choose from
      * @returns A random value from the array
      */
     getRandomValue(values) {
-        const randomIndex = Math.floor(Math.random() * values.length);
+        const randomIndex = Math.floor(this.getSeededRandom() * values.length);
         return values[randomIndex];
     }
     /**
@@ -409,7 +425,7 @@ export class Parser {
      * @returns A weighted random value
      */
     getWeightedRandomValue(weightedRule) {
-        const random = Math.random();
+        const random = this.getSeededRandom();
         // Find the first cumulative weight that is greater than our random number
         for (let i = 0; i < weightedRule.cumulativeWeights.length; i++) {
             if (random <= weightedRule.cumulativeWeights[i]) {
@@ -516,6 +532,33 @@ export class Parser {
      */
     getMaxDepth() {
         return this.maxDepth;
+    }
+    /**
+     * Set a random seed for deterministic random number generation
+     * This makes the parser produce consistent, reproducible results for testing
+     * @param seed - Integer seed value (will be converted to 32-bit unsigned integer)
+     */
+    setRandomSeed(seed) {
+        if (typeof seed !== 'number' || !Number.isInteger(seed)) {
+            throw new Error('Seed must be an integer');
+        }
+        // Convert to 32-bit unsigned integer
+        this.randomSeed = Math.abs(seed) >>> 0;
+        this.currentSeed = this.randomSeed;
+    }
+    /**
+     * Clear the random seed and return to using Math.random()
+     */
+    clearRandomSeed() {
+        this.randomSeed = null;
+        this.currentSeed = 0;
+    }
+    /**
+     * Get the current random seed, if any
+     * @returns Current seed or null if using Math.random()
+     */
+    getRandomSeed() {
+        return this.randomSeed;
     }
 }
 //# sourceMappingURL=Parser.js.map

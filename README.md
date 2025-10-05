@@ -73,6 +73,7 @@ The Story Grammar Parser allows you to create complex, dynamic text generation s
 - **Nested Variables**: Support for deeply nested rule references
 - **Function Rules**: Dynamic rule generation using JavaScript functions
 - **Weighted Rules**: Probability-based selection with custom weights
+- **Seeded Randomness**: Deterministic results for testing and reproducibility
 - **Modifier System**: Apply text transformations during generation
 - **Circular Reference Detection**: Automatic validation to prevent infinite loops
 - **TypeScript Support**: Full type definitions included
@@ -198,6 +199,44 @@ Weighted rules are ideal for:
 - Weather patterns (sunny days more common than storms)
 - Character traits (normal attributes more common than exceptional ones)
 - Any scenario where natural distribution isn't uniform
+
+### Seeded Randomness
+
+For testing and reproducible results, you can seed the random number generator:
+
+```typescript
+const parser = new Parser();
+parser.addRule('character', ['Alice', 'Bob', 'Charlie']);
+parser.addWeightedRule('rarity', ['common', 'rare'], [0.8, 0.2]);
+
+// Set a seed for deterministic results
+parser.setRandomSeed(12345);
+
+console.log(parser.parse('%character% finds %rarity% treasure'));
+// Will always produce the same result with the same seed
+
+// Generate multiple consistent results
+for (let i = 0; i < 3; i++) {
+  console.log(parser.parse('%character% finds %rarity% treasure'));
+}
+
+// Reset to same seed to reproduce the exact same sequence
+parser.setRandomSeed(12345);
+console.log(parser.parse('%character% finds %rarity% treasure')); // Same as first result
+
+// Clear seed to return to true randomness
+parser.clearRandomSeed();
+console.log(parser.parse('%character% finds %rarity% treasure')); // Random again
+```
+
+**Note:** Seeded randomness affects the parser's internal random selection for static and weighted rules. Function rules that use `Math.random()` internally will remain random unless you implement seeding within your functions.
+
+Seeded randomness is perfect for:
+
+- Unit testing with predictable outcomes
+- Debugging complex grammar combinations
+- Generating reproducible procedural content
+- Creating consistent examples for documentation
 
 ### Story Generation
 
@@ -498,6 +537,9 @@ The library is exposed as `StoryGrammar` global object with the `Parser` class a
 
 - `setMaxDepth(depth: number): void` - Set maximum recursion depth (default: 100)
 - `getMaxDepth(): number` - Get current maximum recursion depth
+- `setRandomSeed(seed: number): void` - Set random seed for deterministic results
+- `clearRandomSeed(): void` - Clear random seed and return to Math.random()
+- `getRandomSeed(): number | null` - Get current random seed or null
 - `clearAll(): void` - Clear all rules and modifiers
 
 ### Types

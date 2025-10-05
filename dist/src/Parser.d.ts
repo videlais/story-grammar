@@ -35,6 +35,8 @@ export declare class Parser {
     private modifiers;
     private variablePattern;
     private maxDepth;
+    private randomSeed;
+    private currentSeed;
     /**
      * Add a rule to the grammar
      * @param key - The key to define
@@ -153,6 +155,12 @@ export declare class Parser {
      */
     private applyModifiers;
     /**
+     * Generate a seeded random number between 0 and 1
+     * Uses Linear Congruential Generator (LCG) when seed is set
+     * @returns Random number between 0 and 1
+     */
+    private getSeededRandom;
+    /**
      * Get a random value from an array
      * @param values - Array of values to choose from
      * @returns A random value from the array
@@ -213,5 +221,20 @@ export declare class Parser {
      * @returns Current maximum depth
      */
     getMaxDepth(): number;
+    /**
+     * Set a random seed for deterministic random number generation
+     * This makes the parser produce consistent, reproducible results for testing
+     * @param seed - Integer seed value (will be converted to 32-bit unsigned integer)
+     */
+    setRandomSeed(seed: number): void;
+    /**
+     * Clear the random seed and return to using Math.random()
+     */
+    clearRandomSeed(): void;
+    /**
+     * Get the current random seed, if any
+     * @returns Current seed or null if using Math.random()
+     */
+    getRandomSeed(): number | null;
 }
 //# sourceMappingURL=Parser.d.ts.map
