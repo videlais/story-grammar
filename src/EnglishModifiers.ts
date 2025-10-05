@@ -28,12 +28,12 @@ export const EnglishPluralizationModifier: Modifier = {
   name: 'englishPluralization',
   condition: (text: string) => {
     // Look for plural indicators: numbers > 1, "many", "several", "multiple", etc.
-    return /\b(many|several|multiple|some|few|all|both|various|numerous|\d*[2-9]\d*|\d+[02-9])\s+[a-zA-Z]+/i.test(text) ||
+    return /\b(many|several|multiple|some|few|all|both|various|numerous|[2-9]\d*|\d*[02-9])\s+[a-zA-Z]+/i.test(text) ||
            /\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\s+[a-zA-Z]+/i.test(text) ||
            /\b(zero|no)\s+[a-zA-Z]+/i.test(text); // Zero/no also takes plural
   },
   transform: (text: string) => {
-    return text.replace(/\b(many|several|multiple|some|few|all|both|various|numerous|zero|no|\d*[2-9]\d*|\d+[02-9]|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\s+([a-zA-Z]+)\b/gi, 
+    return text.replace(/\b(many|several|multiple|some|few|all|both|various|numerous|zero|no|[2-9]\d*|\d*[02-9]|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\s+([a-zA-Z]+)\b/gi, 
       (match, quantifier, noun) => {
         const pluralNoun = pluralize(noun);
         return `${quantifier} ${pluralNoun}`;
@@ -109,7 +109,7 @@ export const EnglishPossessiveModifier: Modifier = {
   name: 'englishPossessives',
   condition: (text: string) => {
     // Look for possessive patterns: word + possessive marker
-    return /\b\w+\s+possessive\b/i.test(text) || /\b\w+'s?\s+\w+/.test(text);
+    return /\b\w+\s+possessive\b/i.test(text) || /\b\w+'s?\s+\w/.test(text);
   },
   transform: (text: string) => {
     // Handle explicit possessive marker
@@ -164,14 +164,14 @@ export const PunctuationCleanupModifier: Modifier = {
   name: 'punctuationCleanup',
   condition: (text: string) => {
     // Look for punctuation spacing issues
-    return /\s{2,}/.test(text) || /\s+[.!?,:;]/.test(text) || /[.!?,:;]\S/.test(text);
+    return /\s{2,}/.test(text) || /\s[.!?,:;]/.test(text) || /[.!?,:;]\S/.test(text);
   },
   transform: (text: string) => {
     // Fix multiple spaces
     text = text.replace(/\s{2,}/g, ' ');
     
     // Fix space before punctuation
-    text = text.replace(/\s+([.!?,:;])/g, '$1');
+    text = text.replace(/\s([.!?,:;])/g, '$1');
     
     // Add space after punctuation if missing (except at end)
     text = text.replace(/([.!?,:;])([A-Za-z])/g, '$1 $2');

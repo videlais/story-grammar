@@ -49,7 +49,6 @@ This project is heavily inspired by the great work Kate Compton did and continue
     - [English Capitalization (`EnglishCapitalizationModifier`)](#english-capitalization-englishcapitalizationmodifier)
     - [English Possessives (`EnglishPossessiveModifier`)](#english-possessives-englishpossessivemodifier)
     - [English Verb Agreement (`EnglishVerbAgreementModifier`)](#english-verb-agreement-englishverbagreementmodifier)
-    - [Emphasis Modifier (`EmphasisModifier`)](#emphasis-modifier-emphasismodifier)
     - [Punctuation Cleanup (`PunctuationCleanupModifier`)](#punctuation-cleanup-punctuationcleanupmodifier)
   - [Performance and Utility Features](#performance-and-utility-features)
     - [Batch Processing](#batch-processing)
@@ -476,7 +475,6 @@ parser.loadModifiers(AllEnglishModifiers);
 // - Possessives (John's car)
 // - Verb agreement (he is, they are)
 // - Punctuation cleanup
-// - Emphasis markers
 ```
 
 ### Basic English Modifiers
@@ -550,8 +548,8 @@ Modifiers with higher priority numbers are applied first. This allows you to con
 1. Priority 10: Article correction (a/an)
 2. Priority 9: Pluralization (many/several/three/etc.)
 3. Priority 8: Ordinal conversion (1st/2nd/3rd/etc.)
-4. Priority 5: Emphasis transformations
-5. Priority 1: Capitalization fixes
+4. Priority 7: Capitalization fixes
+5. Priority 1: Punctuation cleanup
 
 This ensures that language-specific transformations (articles, plurals, ordinals) are handled before stylistic transformations.
 
@@ -567,7 +565,6 @@ import {
   EnglishCapitalizationModifier,
   EnglishPossessiveModifier,
   EnglishVerbAgreementModifier,
-  EmphasisModifier,
   PunctuationCleanupModifier,
   AllEnglishModifiers,
   BasicEnglishModifiers
@@ -633,18 +630,6 @@ import {
   - Singular subjects: "he are" → "he is", "she have" → "she has"
   - Plural/quantified subjects: "they is" → "they are", "many has" → "many have"
 - **Examples**: "he are happy" → "he is happy", "many is here" → "many are here"
-
-### Emphasis Modifier (`EmphasisModifier`)
-
-- **Priority**: 4
-- **Function**: Converts emphasis markers to formatting
-- **Triggers**: Emphasis tags in text
-- **Markers**:
-  - `[bold]text[/bold]` → `**text**`
-  - `[italic]text[/italic]` → `*text*`
-  - `[caps]text[/caps]` → `TEXT`
-  - `[emphasis]text[/emphasis]` → `***text***`
-- **Examples**: "[bold]important[/bold]" → "**important**"
 
 ### Punctuation Cleanup (`PunctuationCleanupModifier`)
 
@@ -935,7 +920,6 @@ import {
   EnglishCapitalizationModifier,// Capitalize after sentences
   EnglishPossessiveModifier,    // Handle possessives ('s)
   EnglishVerbAgreementModifier, // Fix subject-verb agreement
-  EmphasisModifier,             // Convert emphasis markers
   PunctuationCleanupModifier,   // Fix spacing/punctuation
   AllEnglishModifiers,          // All modifiers array
   BasicEnglishModifiers         // Core modifiers only
