@@ -12,10 +12,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-s            // Add some range-based rules for dynamic values
-            parser.addRangeRule('gold_amount', { min: 10, max: 500, type: 'integer' }); // 10-500 gold pieces
-            parser.addRangeRule('gem_value', { min: 50, max: 1000, type: 'integer' });  // 50-1000 gold value
-            parser.addRangeRule('party_level', { min: 1, max: 10, type: 'integer' });   // Character levels 1-10;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
@@ -298,7 +295,7 @@
     </div>
 
     <!-- Load Story Grammar from local bundle -->
-    <script src="../dist/story-grammar.bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/videlais/story-grammar@main/dist/story-grammar.bundle.js"></script>
     
     <script>
         // Global variables
