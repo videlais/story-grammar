@@ -1,9 +1,16 @@
 {
   "name": "story-grammar",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A combinatorial grammar for narrative-based projects",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "types": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "build:webpack": "webpack --config webpack.config.cjs",
@@ -16,7 +23,7 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint src/**/*.ts --fix",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist types",
     "prebuild": "npm run clean",
     "all": "npm run lint && npm run test && npm run build:all"
   },

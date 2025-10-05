@@ -5,7 +5,7 @@
  * The actual implementation has been moved to separate files for better modularity.
  */
 // Re-export all types and interfaces
-export * from './types';
+export * from './types.js';
 // Re-export the core Parser class
-export { Parser } from './ParserCore';
+export { Parser } from './ParserCore.js';
 //# sourceMappingURL=Parser.js.map

@@ -2,7 +2,7 @@
  * English language modifiers for the Story Grammar Parser
  */
 
-import { Modifier } from './Parser';
+import { Modifier } from './types.js';
 
 /**
  * English article modifier (a/an correction)

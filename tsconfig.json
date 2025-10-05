@@ -5,7 +5,8 @@
     "moduleResolution": "node",
     "lib": ["ES2020"],
     "outDir": "./dist",
-    "rootDir": ".",
+    "declarationDir": "./types",
+    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -16,9 +17,7 @@
     "resolveJsonModule": true
   },
 "include": [
-  "src/**/*",
-  "test/index.test.ts",
-  "test/Parser.test.ts"
+  "src/**/*"
 ],
   "exclude": [
     "node_modules",

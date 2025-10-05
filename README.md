@@ -131,6 +131,66 @@ const result = parser.parse('I see beautiful %colored_flowers% in the garden.');
 console.log(result); // "I see beautiful red roses in the garden."
 ```
 
+## TypeScript Usage
+
+Story Grammar includes full TypeScript support with comprehensive type definitions. All interfaces are exported for type-safe development:
+
+```typescript
+import { 
+  Parser, 
+  Grammar, 
+  FunctionRule, 
+  ConditionalRule, 
+  Modifier,
+  ParserStats
+} from 'story-grammar';
+
+// Type-safe grammar definition
+const grammar: Grammar = {
+  protagonist: ['brave knight', 'clever wizard'],
+  action: ['rescued', 'discovered'],
+  treasure: ['ancient scroll', 'magical sword']
+};
+
+// Function rules with proper typing
+const dynamicRule: FunctionRule = () => {
+  return ['dynamically generated value'];
+};
+
+// Conditional rules with typed context
+const contextualRule: ConditionalRule = {
+  conditions: [
+    {
+      if: (context: { [key: string]: string }) => context.mood === 'happy',
+      then: ['Great!', 'Wonderful!']
+    },
+    {
+      default: ['Okay', 'Sure']
+    }
+  ]
+};
+
+// Custom modifiers with type safety
+const customModifier: Modifier = {
+  name: 'custom',
+  condition: (text: string) => text.includes('test'),
+  transform: (text: string) => text.toUpperCase(),
+  priority: 5
+};
+
+const parser = new Parser();
+parser.addRules(grammar);
+parser.addFunctionRule('dynamic', dynamicRule);
+parser.addConditionalRule('contextual', contextualRule);
+parser.addModifier(customModifier);
+
+// Type-safe parsing and statistics
+const result: string = parser.parse('%protagonist% %action% %treasure%');
+const stats: ParserStats = parser.getStats();
+```
+
+See [`typescript-usage-example.ts`](./typescript-usage-example.ts) for a complete working example.
+
 ## Examples
 
 ### Basic Usage
@@ -769,7 +829,12 @@ Build the library for Node.js environments:
 npm run build
 ```
 
-This creates TypeScript declaration files and JavaScript modules in the `dist/` directory.
+This creates:
+
+- **TypeScript declaration files** in the `types/` directory
+- **JavaScript modules** in the `dist/` directory
+
+The separated structure keeps type definitions cleanly organized from compiled code.
 
 ### Webpack Bundle
 

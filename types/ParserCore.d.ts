@@ -49,7 +49,7 @@
  * @since 1.0.0
  * @author Story Grammar Parser Team
  */
-import { Grammar, Modifier, FunctionRule, ConditionalRule, TemplateRule, ParseOptions, ParseResult, ValidationResult, ParseTimingResult, ParserStats, ParserConfig, OptimizationReport, RuleAnalysis, ErrorContext } from './types';
+import { Grammar, Modifier, FunctionRule, ConditionalRule, TemplateRule, ParseOptions, ParseResult, ValidationResult, ParseTimingResult, ParserStats, ParserConfig, OptimizationReport, RuleAnalysis, ErrorContext } from './types.js';
 export declare class Parser {
     /** Core static grammar rules mapping rule names to arrays of possible values */
     private grammar;

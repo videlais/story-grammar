@@ -69,7 +69,7 @@ import {
   OptimizationReport,
   RuleAnalysis,
   ErrorContext
-} from './types';
+} from './types.js';
 
 export class Parser {
   /** Core static grammar rules mapping rule names to arrays of possible values */
