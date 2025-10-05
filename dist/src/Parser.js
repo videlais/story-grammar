@@ -4,6 +4,8 @@
 export class Parser {
     constructor() {
         this.grammar = {};
+        this.functionRules = new Map();
+        this.weightedRules = new Map();
         this.modifiers = new Map();
         this.variablePattern = /%([^%]+)%/g;
         this.maxDepth = 100; // Prevent infinite recursion
@@ -30,6 +32,109 @@ export class Parser {
         for (const [key, values] of Object.entries(rules)) {
             this.addRule(key, values);
         }
+    }
+    /**
+     * Add a function rule to the grammar
+     * @param key - The key to define
+     * @param fn - Function that returns an array of possible values
+     */
+    addFunctionRule(key, fn) {
+        if (!key || typeof key !== 'string') {
+            throw new Error('Key must be a non-empty string');
+        }
+        if (typeof fn !== 'function') {
+            throw new Error('Value must be a function');
+        }
+        this.functionRules.set(key, fn);
+    }
+    /**
+     * Remove a function rule
+     * @param key - Rule key to remove
+     * @returns True if the rule was removed, false if it didn't exist
+     */
+    removeFunctionRule(key) {
+        return this.functionRules.delete(key);
+    }
+    /**
+     * Check if a function rule exists
+     * @param key - Rule key to check
+     * @returns True if the function rule exists
+     */
+    hasFunctionRule(key) {
+        return this.functionRules.has(key);
+    }
+    /**
+     * Clear all function rules
+     */
+    clearFunctionRules() {
+        this.functionRules.clear();
+    }
+    /**
+     * Add a weighted rule to the grammar
+     * @param key - The key to define
+     * @param values - Array of possible values for this key
+     * @param weights - Array of weights corresponding to each value (must sum to 1.0)
+     */
+    addWeightedRule(key, values, weights) {
+        if (!key || typeof key !== 'string') {
+            throw new Error('Key must be a non-empty string');
+        }
+        if (!Array.isArray(values)) {
+            throw new Error('Values must be an array');
+        }
+        if (!Array.isArray(weights)) {
+            throw new Error('Weights must be an array');
+        }
+        if (values.length !== weights.length) {
+            throw new Error('Values and weights arrays must have the same length');
+        }
+        if (values.length === 0) {
+            throw new Error('Values array cannot be empty');
+        }
+        // Validate weights
+        for (const weight of weights) {
+            if (typeof weight !== 'number' || weight < 0) {
+                throw new Error('All weights must be non-negative numbers');
+            }
+        }
+        const weightSum = weights.reduce((sum, weight) => sum + weight, 0);
+        if (Math.abs(weightSum - 1.0) > 0.0001) {
+            throw new Error(`Weights must sum to 1.0, but sum to ${weightSum}`);
+        }
+        // Calculate cumulative weights for efficient sampling
+        const cumulativeWeights = [];
+        let cumSum = 0;
+        for (const weight of weights) {
+            cumSum += weight;
+            cumulativeWeights.push(cumSum);
+        }
+        this.weightedRules.set(key, {
+            values: [...values],
+            weights: [...weights],
+            cumulativeWeights
+        });
+    }
+    /**
+     * Remove a weighted rule
+     * @param key - Rule key to remove
+     * @returns True if the rule was removed, false if it didn't exist
+     */
+    removeWeightedRule(key) {
+        return this.weightedRules.delete(key);
+    }
+    /**
+     * Check if a weighted rule exists
+     * @param key - Rule key to check
+     * @returns True if the weighted rule exists
+     */
+    hasWeightedRule(key) {
+        return this.weightedRules.has(key);
+    }
+    /**
+     * Clear all weighted rules
+     */
+    clearWeightedRules() {
+        this.weightedRules.clear();
     }
     /**
      * Add a modifier to the grammar
@@ -234,13 +339,40 @@ export class Parser {
         // Reset the regex lastIndex to ensure proper matching
         this.variablePattern.lastIndex = 0;
         return text.replace(this.variablePattern, (match, key) => {
-            const values = this.grammar[key];
-            if (!values || values.length === 0) {
-                // Return the original variable if no rule is found
-                return match;
+            let selectedValue;
+            // Check function rules first
+            const functionRule = this.functionRules.get(key);
+            if (functionRule) {
+                try {
+                    const values = functionRule();
+                    if (!Array.isArray(values)) {
+                        throw new Error(`Function rule '${key}' must return an array`);
+                    }
+                    if (values.length === 0) {
+                        return match;
+                    }
+                    selectedValue = this.getRandomValue(values);
+                }
+                catch (error) {
+                    throw new Error(`Error executing function rule '${key}': ${error instanceof Error ? error.message : String(error)}`);
+                }
             }
-            // Randomly select a value
-            const selectedValue = this.getRandomValue(values);
+            else {
+                // Check weighted rules second
+                const weightedRule = this.weightedRules.get(key);
+                if (weightedRule) {
+                    selectedValue = this.getWeightedRandomValue(weightedRule);
+                }
+                else {
+                    // Fall back to static rules
+                    const values = this.grammar[key];
+                    if (!values || values.length === 0) {
+                        // Return the original variable if no rule is found
+                        return match;
+                    }
+                    selectedValue = this.getRandomValue(values);
+                }
+            }
             // Recursively expand variables in the selected value
             return this.expandVariables(selectedValue, depth + 1);
         });
@@ -272,30 +404,47 @@ export class Parser {
         return values[randomIndex];
     }
     /**
-     * Check if a key exists in the grammar
+     * Get a weighted random value from a weighted rule
+     * @param weightedRule - Weighted rule containing values and cumulative weights
+     * @returns A weighted random value
+     */
+    getWeightedRandomValue(weightedRule) {
+        const random = Math.random();
+        // Find the first cumulative weight that is greater than our random number
+        for (let i = 0; i < weightedRule.cumulativeWeights.length; i++) {
+            if (random <= weightedRule.cumulativeWeights[i]) {
+                return weightedRule.values[i];
+            }
+        }
+        // Fallback to last value (should not happen with proper weights)
+        return weightedRule.values[weightedRule.values.length - 1];
+    }
+    /**
+     * Check if a rule exists (static, function, or weighted rule)
      * @param key - The key to check
-     * @returns True if the key exists, false otherwise
+     * @returns True if the rule exists, false otherwise
      */
     hasRule(key) {
-        return key in this.grammar;
+        return this.functionRules.has(key) || this.weightedRules.has(key) || key in this.grammar;
     }
     /**
-     * Remove a rule from the grammar
+     * Remove a rule (static, function, or weighted rule)
      * @param key - The key to remove
-     * @returns True if the rule was removed, false if it didn't exist
+     * @returns True if rule was removed, false if it didn't exist
      */
     removeRule(key) {
-        if (this.hasRule(key)) {
-            delete this.grammar[key];
-            return true;
-        }
-        return false;
+        const removedFunction = this.functionRules.delete(key);
+        const removedWeighted = this.weightedRules.delete(key);
+        const removedStatic = key in this.grammar ? (delete this.grammar[key], true) : false;
+        return removedFunction || removedWeighted || removedStatic;
     }
     /**
-     * Clear all rules from the grammar
+     * Clear all rules (static, function, and weighted rules)
      */
     clear() {
         this.grammar = {};
+        this.functionRules.clear();
+        this.weightedRules.clear();
     }
     /**
      * Clear all modifiers

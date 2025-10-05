@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Function Rules Example - Story Grammar</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .example-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .template {
+            font-family: 'Courier New', monospace;
+            background: #ecf0f1;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+        }
+        .result {
+            background: #e8f5e8;
+            border: 1px solid #27ae60;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 4px 0;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 Function Rules Example</h1>
+        <p>This example demonstrates <strong>dynamic rule generation</strong> using function-based rules in Story Grammar. Unlike static rules that contain fixed arrays, function rules generate values dynamically each time they're called.</p>
+        
+        <div class="example-section">
+            <h3>Static vs Function Rules</h3>
+            <p><strong>Static Rule:</strong> <code>weather: ['sunny', 'rainy', 'cloudy']</code></p>
+            <p><strong>Function Rule:</strong> <code>randomNumber: () => [Math.floor(Math.random() * 100).toString()]</code></p>
+        </div>
+
+        <div class="example-section">
+            <h3>Live Examples</h3>
+            <div id="examples"></div>
+        </div>
+
+        <div class="controls">
+            <button onclick="generateExamples()">🎲 Generate New Examples</button>
+            <button onclick="showCode()">📝 Show Code</button>
+        </div>
+
+        <div id="code-section" style="display: none;">
+            <h3>Implementation Code</h3>
+            <div class="code-block">
+// Create parser and add static rules
+const parser = new Parser();
+parser.addRule('character', ['Alice', 'Bob', 'Charlie']);
+parser.addRule('location', ['forest', 'castle', 'tavern']);
+
+// Add function rules for dynamic content
+parser.addFunctionRule('randomNumber', () => {
+    return [Math.floor(Math.random() * 100).toString()];
+});
+
+parser.addFunctionRule('diceRoll', () => {
+    const roll = Math.floor(Math.random() * 20) + 1;
+    return [`${roll} (d20)`];
+});
+
+parser.addFunctionRule('timestamp', () => {
+    const now = new Date();
+    return [now.toLocaleTimeString()];
+});
+
+// Use in templates
+const result = parser.parse('%character% rolls %diceRoll% at %timestamp%');
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/story-grammar@latest/dist/bundle.min.js"></script>
+    <script>
+        const parser = new StoryGrammar.Parser();
+
+        // Add static rules
+        parser.addRule('character', ['Alice the Warrior', 'Bob the Mage', 'Charlie the Rogue']);
+        parser.addRule('location', ['enchanted forest', 'ancient castle', 'bustling tavern', 'misty mountain']);
+        parser.addRule('action', ['discovers', 'encounters', 'searches for', 'battles']);
+
+        // Add function rules
+        parser.addFunctionRule('randomNumber', () => {
+            const num = Math.floor(Math.random() * 100) + 1;
+            return [num.toString()];
+        });
+
+        parser.addFunctionRule('diceRoll', () => {
+            const roll = Math.floor(Math.random() * 20) + 1;
+            return [`${roll} (d20)`];
+        });
+
+        parser.addFunctionRule('timestamp', () => {
+            const now = new Date();
+            return [now.toLocaleTimeString()];
+        });
+
+        parser.addFunctionRule('temperature', () => {
+            const temp = Math.floor(Math.random() * 50) + 32; // 32-82°F
+            return [`${temp}°F`];
+        });
+
+        parser.addFunctionRule('goldAmount', () => {
+            const gold = Math.floor(Math.random() * 500) + 10;
+            return [gold.toString()];
+        });
+
+        // Templates showcasing function rules
+        const templates = [
+            '%character% rolls %diceRoll% for initiative.',
+            '%character% %action% %goldAmount% gold pieces in the %location%.',
+            'The temperature in the %location% is %temperature%.',
+            'Random encounter at %timestamp%: strength %randomNumber%/100',
+            '%character% finds treasure worth %goldAmount% coins (rolled %diceRoll%).'
+        ];
+
+        function generateExamples() {
+            const examplesDiv = document.getElementById('examples');
+            examplesDiv.innerHTML = '';
+
+            templates.forEach((template, index) => {
+                const templateDiv = document.createElement('div');
+                templateDiv.innerHTML = `
+                    <h4>Example ${index + 1}</h4>
+                    <div class="template">Template: ${template}</div>
+                `;
+
+                // Generate 3 variations to show randomness
+                for (let i = 0; i < 3; i++) {
+                    const result = parser.parse(template);
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'result';
+                    resultDiv.textContent = `→ ${result}`;
+                    templateDiv.appendChild(resultDiv);
+                }
+
+                examplesDiv.appendChild(templateDiv);
+            });
+        }
+
+        function showCode() {
+            const codeSection = document.getElementById('code-section');
+            codeSection.style.display = codeSection.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Generate initial examples
+        generateExamples();
+    </script>
+</body>
+</html>

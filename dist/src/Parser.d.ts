@@ -20,8 +20,18 @@ export interface Modifier {
     transform: ModifierFunction;
     priority?: number;
 }
+export interface FunctionRule {
+    (): string[];
+}
+export interface WeightedRule {
+    values: string[];
+    weights: number[];
+    cumulativeWeights: number[];
+}
 export declare class Parser {
     private grammar;
+    private functionRules;
+    private weightedRules;
     private modifiers;
     private variablePattern;
     private maxDepth;
@@ -36,6 +46,51 @@ export declare class Parser {
      * @param rules - Object containing key-value pairs of rules
      */
     addRules(rules: Grammar): void;
+    /**
+     * Add a function rule to the grammar
+     * @param key - The key to define
+     * @param fn - Function that returns an array of possible values
+     */
+    addFunctionRule(key: string, fn: FunctionRule): void;
+    /**
+     * Remove a function rule
+     * @param key - Rule key to remove
+     * @returns True if the rule was removed, false if it didn't exist
+     */
+    removeFunctionRule(key: string): boolean;
+    /**
+     * Check if a function rule exists
+     * @param key - Rule key to check
+     * @returns True if the function rule exists
+     */
+    hasFunctionRule(key: string): boolean;
+    /**
+     * Clear all function rules
+     */
+    clearFunctionRules(): void;
+    /**
+     * Add a weighted rule to the grammar
+     * @param key - The key to define
+     * @param values - Array of possible values for this key
+     * @param weights - Array of weights corresponding to each value (must sum to 1.0)
+     */
+    addWeightedRule(key: string, values: string[], weights: number[]): void;
+    /**
+     * Remove a weighted rule
+     * @param key - Rule key to remove
+     * @returns True if the rule was removed, false if it didn't exist
+     */
+    removeWeightedRule(key: string): boolean;
+    /**
+     * Check if a weighted rule exists
+     * @param key - Rule key to check
+     * @returns True if the weighted rule exists
+     */
+    hasWeightedRule(key: string): boolean;
+    /**
+     * Clear all weighted rules
+     */
+    clearWeightedRules(): void;
     /**
      * Add a modifier to the grammar
      * @param modifier - The modifier to add
@@ -104,19 +159,25 @@ export declare class Parser {
      */
     private getRandomValue;
     /**
-     * Check if a key exists in the grammar
+     * Get a weighted random value from a weighted rule
+     * @param weightedRule - Weighted rule containing values and cumulative weights
+     * @returns A weighted random value
+     */
+    private getWeightedRandomValue;
+    /**
+     * Check if a rule exists (static, function, or weighted rule)
      * @param key - The key to check
-     * @returns True if the key exists, false otherwise
+     * @returns True if the rule exists, false otherwise
      */
     hasRule(key: string): boolean;
     /**
-     * Remove a rule from the grammar
+     * Remove a rule (static, function, or weighted rule)
      * @param key - The key to remove
-     * @returns True if the rule was removed, false if it didn't exist
+     * @returns True if rule was removed, false if it didn't exist
      */
     removeRule(key: string): boolean;
     /**
-     * Clear all rules from the grammar
+     * Clear all rules (static, function, and weighted rules)
      */
     clear(): void;
     /**

@@ -15,10 +15,13 @@ This project is heavily inspired by the great work Kate Compton did and continue
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
     - [Key Features](#key-features)
+  - [Features](#features)
   - [Quick Start](#quick-start)
   - [Examples](#examples)
     - [Basic Usage](#basic-usage)
     - [Complex Nested Variables](#complex-nested-variables)
+    - [Function Rules](#function-rules)
+    - [Weighted Rules](#weighted-rules)
     - [Story Generation](#story-generation)
     - [Error Handling](#error-handling)
   - [Built-in Modifiers](#built-in-modifiers)
@@ -40,8 +43,21 @@ This project is heavily inspired by the great work Kate Compton did and continue
     - [TypeScript Build](#typescript-build)
     - [Webpack Bundle](#webpack-bundle)
     - [Browser Usage](#browser-usage)
+  - [API Reference](#api-reference)
+    - [Parser Class](#parser-class)
+      - [Static Rules](#static-rules)
+      - [Function Rule Methods](#function-rule-methods)
+      - [Weighted Rule Methods](#weighted-rule-methods)
+      - [Parsing](#parsing)
+      - [Modifiers](#modifiers)
+      - [Built-in Modifier Methods](#built-in-modifier-methods)
+      - [Configuration](#configuration)
+    - [Types](#types)
   - [Interactive Examples](#interactive-examples)
     - [🏰 Fantasy Kingdom Generator](#-fantasy-kingdom-generator)
+    - [🎲 Function Rules Example](#-function-rules-example)
+    - [⚖️ Weighted Rules Example](#️-weighted-rules-example)
+    - [🐉 D\&D Encounter Generator](#-dd-encounter-generator)
     - [Additional Examples](#additional-examples)
 
 ## Overview
@@ -50,13 +66,17 @@ The Story Grammar Parser allows you to create complex, dynamic text generation s
 
 ### Key Features
 
-- **Variable Expansion**: Use `%variable%` syntax to define expandable variables
-- **Complex Grammar**: Variables can reference other variables, allowing for nested expansion
-- **Random Selection**: Each variable randomly selects from its possible values
-- **Validation**: Built-in grammar validation to detect missing rules and circular references
-- **Error Handling**: Robust error handling with configurable recursion depth limits
-- **TypeScript Support**: Full TypeScript support with comprehensive type definitions
-- **Modifier System**: Apply conditional transformations to generated text with built-in English language support
+## Features
+
+- **Simple Grammar Definition**: Define rules using key-value pairs
+- **Variable Expansion**: Use `%variable%` syntax for rule expansion
+- **Nested Variables**: Support for deeply nested rule references
+- **Function Rules**: Dynamic rule generation using JavaScript functions
+- **Weighted Rules**: Probability-based selection with custom weights
+- **Modifier System**: Apply text transformations during generation
+- **Circular Reference Detection**: Automatic validation to prevent infinite loops
+- **TypeScript Support**: Full type definitions included
+- **Zero Dependencies**: Pure TypeScript implementation
 
 ## Quick Start
 
@@ -97,19 +117,87 @@ console.log(parser.parse(text));
 ### Complex Nested Variables
 
 ```typescript
-// Variables can reference other variables
-parser.addRule('flowers', ['roses', 'daisies']);
-parser.addRule('colors', ['red', 'blue']);
-parser.addRule('colored_flowers', ['%colors% %flowers%']);
-parser.addRule('plants', ['%colored_flowers%', 'trees', 'bushes']);
-parser.addRule('garden_items', ['%plants%', 'stones', 'fountains']);
+### Nested Variables
 
-const result = parser.parse('The garden has %garden_items%.');
-// Possible outputs:
-// "The garden has red roses."
-// "The garden has trees."
-// "The garden has fountains."
+Variables can reference other variables:
+
+```typescript
+parser.addRule('greeting', ['Hello %name%!', 'Hi there %name%!']);
+parser.addRule('name', ['Alice', 'Bob', 'Charlie']);
+parser.addRule('farewell', ['Goodbye %name%', 'See you later %name%']);
+
+console.log(parser.parse('%greeting% %farewell%'));
+// Output: "Hello Alice! See you later Bob"
 ```
+
+### Function Rules
+
+Create dynamic rules that generate values at runtime:
+
+```typescript
+// Add a function rule that returns random numbers
+parser.addFunctionRule('randomNumber', () => {
+    const num = Math.floor(Math.random() * 100) + 1;
+    return [num.toString()];
+});
+
+// Add a function rule for dice rolls
+parser.addFunctionRule('diceRoll', () => {
+    const roll = Math.floor(Math.random() * 20) + 1;
+    return [`${roll} (d20)`];
+});
+
+// Add a function rule for current time
+parser.addFunctionRule('timestamp', () => {
+    return [new Date().toLocaleTimeString()];
+});
+
+console.log(parser.parse('Player rolls %diceRoll% at %timestamp%'));
+// Output: "Player rolls 15 (d20) at 3:45:21 PM"
+
+console.log(parser.parse('Random encounter strength: %randomNumber%'));
+// Output: "Random encounter strength: 73"
+```
+
+Function rules are perfect for:
+
+- Random numbers and dice rolls
+- Current date/time values
+- Dynamic calculations
+- External API data (when used with async patterns)
+- Any content that changes each time it's generated
+
+### Weighted Rules
+
+Create rules where some values are more likely than others using probability weights:
+
+```typescript
+// Equal probability (default behavior)
+parser.addRule('color', ['red', 'green', 'blue']); // Each has 33.33% chance
+
+// Weighted probability - weights must sum to 1.0
+parser.addWeightedRule('rarity', 
+  ['common', 'uncommon', 'rare', 'epic', 'legendary'], 
+  [0.50, 0.30, 0.15, 0.04, 0.01]
+);
+
+// More realistic treasure distribution
+parser.addWeightedRule('treasure', 
+  ['coins', 'jewelry', 'weapon', 'armor', 'artifact'], 
+  [0.40, 0.25, 0.20, 0.10, 0.05]
+);
+
+console.log(parser.parse('You found %rarity% %treasure%!'));
+// Output: "You found common coins!" (most likely)
+// Output: "You found legendary artifact!" (very rare - 0.05% chance)
+```
+
+Weighted rules are ideal for:
+
+- Realistic item rarity in games (common items more frequent than legendary)
+- Weather patterns (sunny days more common than storms)
+- Character traits (normal attributes more common than exceptional ones)
+- Any scenario where natural distribution isn't uniform
 
 ### Story Generation
 
@@ -359,19 +447,123 @@ Include the webpack bundle in your HTML:
 
 The library is exposed as `StoryGrammar` global object with the `Parser` class available as `StoryGrammar.Parser`.
 
+## API Reference
+
+### Parser Class
+
+#### Static Rules
+
+- `addRule(key: string, values: string[])` - Add a static rule with fixed values
+- `addRules(rules: Grammar)` - Add multiple static rules at once  
+- `removeRule(key: string): boolean` - Remove any rule (static or function)
+- `hasRule(key: string): boolean` - Check if any rule exists (static or function)
+- `clear()` - Clear all rules (static and function)
+- `getGrammar(): Grammar` - Get copy of static rules only
+
+#### Function Rule Methods
+
+- `addFunctionRule(key: string, fn: FunctionRule): void` - Add a dynamic function rule
+- `removeFunctionRule(key: string): boolean` - Remove a function rule
+- `hasFunctionRule(key: string): boolean` - Check if function rule exists
+- `clearFunctionRules(): void` - Clear all function rules
+
+#### Weighted Rule Methods
+
+- `addWeightedRule(key: string, values: string[], weights: number[]): void` - Add a weighted probability rule
+- `removeWeightedRule(key: string): boolean` - Remove a weighted rule
+- `hasWeightedRule(key: string): boolean` - Check if weighted rule exists
+- `clearWeightedRules(): void` - Clear all weighted rules
+
+#### Parsing
+
+- `parse(text: string): string` - Parse text and expand all variables
+- `findVariables(text: string): string[]` - Find all variables in text
+- `validate(): ValidationResult` - Validate grammar for missing rules and circular references
+
+#### Modifiers
+
+- `addModifier(modifier: Modifier): void` - Add a text transformation modifier
+- `removeModifier(name: string): boolean` - Remove a modifier
+- `hasModifier(name: string): boolean` - Check if modifier exists
+- `getModifiers(): Modifier[]` - Get all modifiers sorted by priority
+- `clearModifiers(): void` - Clear all modifiers
+
+#### Built-in Modifier Methods
+
+- `addEnglishArticleModifier()` - Fix a/an articles based on vowel sounds
+- `addEnglishPluralizationModifier()` - Handle English plural forms
+- `addEnglishOrdinalModifier()` - Convert numbers to ordinal form (1st, 2nd, etc.)
+
+#### Configuration
+
+- `setMaxDepth(depth: number): void` - Set maximum recursion depth (default: 100)
+- `getMaxDepth(): number` - Get current maximum recursion depth
+- `clearAll(): void` - Clear all rules and modifiers
+
+### Types
+
+```typescript
+interface FunctionRule {
+  (): string[];
+}
+
+interface WeightedRule {
+  values: string[];
+  weights: number[];
+  cumulativeWeights: number[];
+}
+
+interface Grammar {
+  [key: string]: string[];
+}
+
+interface Modifier {
+  name: string;
+  condition: (text: string, context?: ModifierContext) => boolean;
+  transform: (text: string, context?: ModifierContext) => string;
+  priority?: number;
+}
+```
+
 ## Interactive Examples
 
 Visit the `docs/` folder for interactive examples demonstrating the Story Grammar library:
 
 ### 🏰 Fantasy Kingdom Generator
 
-**File:** [`docs/fantasy-kingdom-example.html`](docs/fantasy-kingdom-example.html)
+**File:** [`docs/fantasy-kingdom-example.html`](docs/fantasy-kingdom-example.html)  
+**Live Demo:** [https://videlais.github.io/story-grammar/fantasy-kingdom-example.html](https://videlais.github.io/story-grammar/fantasy-kingdom-example.html)
 
 A complete interactive example that generates 12 generations of fantasy kingdoms with dramatic endings.
 
+### 🎲 Function Rules Example
+
+**File:** [`docs/function-rules-example.html`](docs/function-rules-example.html)  
+**Live Demo:** [https://dancox.github.io/story-grammar/function-rules-example.html](https://dancox.github.io/story-grammar/function-rules-example.html)
+
+Demonstrates dynamic rule generation using function-based rules. Features:
+
+- **Dynamic Content**: Rules that generate different values each time
+- **Random Numbers**: Dice rolls, percentages, and random values
+- **Real-time Data**: Current timestamps and calculated values
+- **Interactive Examples**: Live demonstration of function vs static rules
+
+### ⚖️ Weighted Rules Example
+
+**File:** [`docs/weighted-rules-example.html`](docs/weighted-rules-example.html)  
+**Live Demo:** [https://dancox.github.io/story-grammar/weighted-rules-example.html](https://dancox.github.io/story-grammar/weighted-rules-example.html)
+
+Showcases probability-based rule selection with custom weights. Features:
+
+- **Realistic Distributions**: Common items appear more frequently than rare ones
+- **Statistical Verification**: 1000-sample tests verify weight accuracy
+- **Comparative Analysis**: Side-by-side weighted vs equal probability
+- **Interactive Controls**: Live weight adjustment and result generation
+
 ### 🐉 D&D Encounter Generator
 
-**File:** [`docs/dnd-encounter-generator.html`](docs/dnd-encounter-generator.html)
+**File:** [`docs/dnd-encounter-generator.html`](docs/dnd-encounter-generator.html)  
+**Live Demo:** [https://videlais.github.io/story-grammar/dnd-encounter-generator.html](https://videlais.github.io/story-grammar/dnd-encounter-generator.html)
 
 A dynamic D&D encounter generator that fetches real monster data from GitHub and creates procedural encounters. Features:
 
