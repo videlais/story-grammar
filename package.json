@@ -1,0 +1,51 @@
+{
+  "name": "story-grammar",
+  "version": "1.0.0",
+  "description": "A combinatorial grammar for narrative-based projects",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:webpack": "webpack --config webpack.config.cjs",
+    "build:webpack:dev": "webpack --config webpack.dev.config.cjs",
+    "build:all": "npm run build && npm run build:webpack",
+    "dev": "ts-node --esm src/index.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "all": "npm run lint && npm run test && npm run build:all"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/videlais/story-grammar.git"
+  },
+  "keywords": [],
+  "author": "Dan Cox",
+  "license": "MIT",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/videlais/story-grammar/issues"
+  },
+  "homepage": "https://github.com/videlais/story-grammar#readme",
+  "ts-node": {
+    "esm": true
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.37.0",
+    "@types/jest": "^30.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
+    "eslint": "^9.37.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.4",
+    "ts-node": "^10.9.2",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.9.3",
+    "webpack": "^5.96.1",
+    "webpack-cli": "^5.1.4"
+  }
+}
