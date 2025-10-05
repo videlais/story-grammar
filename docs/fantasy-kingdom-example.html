@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Kingdom Generator - Story Grammar Example</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5dc;
+            color: #2c1810;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #8B4513;
+            padding-bottom: 20px;
+        }
+        
+        h1 {
+            color: #8B4513;
+            font-size: 2.5em;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-style: italic;
+            color: #654321;
+            margin-top: 10px;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #8B4513, #A0522D);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .generation-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .generation {
+            background: #fff8dc;
+            border: 2px solid #daa520;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .generation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #daa520, #b8860b, #daa520);
+        }
+        
+        .generation-number {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #8B4513;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #daa520;
+            padding-bottom: 5px;
+        }
+        
+        .story-text {
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .ending {
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .ending.murder {
+            background-color: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+        
+        .ending.invasion {
+            background-color: #fff3e0;
+            color: #ef6c00;
+            border-left: 4px solid #ef6c00;
+        }
+        
+        .ending.flee {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+        
+        .loading {
+            text-align: center;
+            font-style: italic;
+            color: #8B4513;
+        }
+        
+        .stats {
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+            background: #fff8dc;
+            border-radius: 10px;
+            border: 2px solid #daa520;
+        }
+        
+        .stats h3 {
+            color: #8B4513;
+            margin-top: 0;
+        }
+        
+        .stat-item {
+            display: inline-block;
+            margin: 0 20px;
+            padding: 10px;
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #8B4513;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚔️ Fantasy Kingdom Generator ⚔️</h1>
+        <p class="subtitle">Powered by Story Grammar - Twelve Generations of Royal Drama</p>
+        <p>Each generation tells the tale of a kingdom's rise and inevitable dramatic end...</p>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="generateAllKingdoms()">🏰 Generate 12 Kingdoms</button>
+        <button class="btn" onclick="generateSingleKingdom()">👑 Generate One Kingdom</button>
+        <button class="btn" onclick="clearGenerations()">🧹 Clear All</button>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        Weaving tales of ancient kingdoms... ⚡
+    </div>
+
+    <div id="stats" class="stats" style="display: none;">
+        <h3>📊 Kingdom Fate Statistics</h3>
+        <div class="stat-item">
+            <div class="stat-value" id="murder-count">0</div>
+            <div>Murders</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="invasion-count">0</div>
+            <div>Invasions</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="flee-count">0</div>
+            <div>Royal Flight</div>
+        </div>
+    </div>
+
+    <div id="generations" class="generation-container"></div>
+
+    <!-- Load Story Grammar from CDN (using jsDelivr as example) -->
+    <!-- Note: Replace this URL with your actual published CDN URL -->
+    <script src="https://cdn.jsdelivr.net/gh/videlais/story-grammar@main/dist/story-grammar.bundle.js"></script>
+    
+    <script>
+        // Initialize the Story Grammar parser
+        const parser = new StoryGrammar.Parser();
+        
+        // Add English language modifiers
+        parser.addEnglishArticleModifier();
+        parser.addEnglishPluralizationModifier();
+        parser.addEnglishOrdinalModifier();
+        
+        // Define the fantasy kingdom grammar
+        function setupFantasyGrammar() {
+            // Kingdom characteristics
+            parser.addRule('kingdom_names', [
+                'Valdoria', 'Aethermoor', 'Drakmonia', 'Silverhold', 'Ironspire',
+                'Goldenheart', 'Shadowmere', 'Crystalfall', 'Stormwatch', 'Rosehaven',
+                'Thornwick', 'Mistral', 'Emberstone', 'Frostguard', 'Starfall'
+            ]);
+            
+            parser.addRule('ruler_names', [
+                'Aldric', 'Evangeline', 'Theron', 'Isolde', 'Magnus', 'Seraphina',
+                'Gareth', 'Cordelia', 'Roderick', 'Lysandra', 'Cassius', 'Vivienne',
+                'Tristan', 'Arabella', 'Darius', 'Celeste', 'Lucian', 'Ophelia'
+            ]);
+            
+            parser.addRule('ruler_titles', [
+                'King', 'Queen', 'Emperor', 'Empress', 'Sovereign', 'Regent',
+                'High Lord', 'High Lady', 'Grand Duke', 'Grand Duchess'
+            ]);
+            
+            parser.addRule('kingdom_traits', [
+                'prosperous', 'war-torn', 'mystical', 'ancient', 'golden',
+                'troubled', 'magnificent', 'cursed', 'blessed', 'forgotten',
+                'legendary', 'mysterious', 'powerful', 'declining', 'rising'
+            ]);
+            
+            parser.addRule('kingdom_features', [
+                'towering spires', 'enchanted forests', 'crystal caves', 'floating gardens',
+                'golden fields', 'silver mines', 'ancient libraries', 'magical academies',
+                'dragon roosts', 'sacred temples', 'haunted ruins', 'celestial observatories',
+                'underground rivers', 'sky bridges', 'phoenix nests'
+            ]);
+            
+            parser.addRule('reign_events', [
+                'built magnificent %kingdom_features%',
+                'discovered ancient %kingdom_features%',
+                'formed alliances with neighboring realms',
+                'established a great library of forbidden knowledge',
+                'tamed wild dragons that now guard the realm',
+                'created magical wards protecting the kingdom',
+                'founded a academy for young mages',
+                'opened trade routes through dangerous lands',
+                'solved the mystery of the %kingdom_features%',
+                'united the warring noble houses',
+                'brought prosperity through wise taxation',
+                'defended against multiple barbarian raids'
+            ]);
+            
+            parser.addRule('reign_years', [
+                '7', '12', '15', '23', '18', '9', '31', '14', '26', '11', '19', '8'
+            ]);
+            
+            // Murder endings
+            parser.addRule('murder_methods', [
+                'poisoned during a grand feast',
+                'assassinated by a trusted advisor',
+                'killed by a jealous sibling in the throne room',
+                'murdered by rebel nobles in the dead of night',
+                'struck down by a vengeful former ally',
+                'poisoned by a rival kingdom\'s spy',
+                'killed during a failed coup attempt',
+                'assassinated while sleeping in the royal chambers'
+            ]);
+            
+            // Invasion endings  
+            parser.addRule('invading_forces', [
+                'a horde of savage barbarians from the frozen north',
+                'an army of undead warriors led by a lich king',
+                'dragon riders from the volcanic islands',
+                'a coalition of rival kingdoms seeking revenge',
+                'mysterious shadow creatures from another realm',
+                'an unstoppable legion of mechanical constructs',
+                'pirates who conquered the coastal fortresses',
+                'a cult of demon worshippers with otherworldly allies'
+            ]);
+            
+            // Flee endings
+            parser.addRule('flee_reasons', [
+                'a terrible plague began turning citizens into monsters',
+                'an ancient curse awakened and started consuming the land',
+                'the treasury was bankrupted by corrupt officials',
+                'a prophesied doom was about to befall the kingdom',
+                'the royal bloodline was revealed to be illegitimate',
+                'a massive earthquake destroyed most of the capital',
+                'the people rose up in violent rebellion',
+                'a powerful witch placed a death curse on the royal family'
+            ]);
+            
+            parser.addRule('flee_destinations', [
+                'disappeared into the Whispering Woods, never to be seen again',
+                'fled across the sea to distant, unknown lands',
+                'retreated to a hidden mountain fortress',
+                'vanished into the mystical realm of the fae',
+                'escaped through ancient magical portals',
+                'joined a monastery in the far desert',
+                'sailed away on the last ship as the kingdom burned',
+                'used powerful magic to transport to another world'
+            ]);
+            
+            // Main story templates
+            parser.addRule('kingdom_intro', [
+                'In the %kingdom_traits% kingdom of %kingdom_names%, %ruler_titles% %ruler_names% ruled for %reign_years% years.',
+                'The realm of %kingdom_names% was governed by the %kingdom_traits% %ruler_titles% %ruler_names% for %reign_years% prosperous years.',
+                '%ruler_titles% %ruler_names% of %kingdom_names% reigned over the %kingdom_traits% lands for %reign_years% years.'
+            ]);
+            
+            parser.addRule('kingdom_middle', [
+                'During this time, the ruler %reign_events% and brought great %kingdom_traits% to the realm.',
+                'The %ruler_titles% was known for having %reign_events%, making %kingdom_names% famous throughout the land.',
+                'Under %ruler_names%\'s rule, the kingdom %reign_events% and became renowned for its %kingdom_features%.'
+            ]);
+            
+            parser.addRule('murder_ending', [
+                'However, the reign came to a bloody end when %ruler_titles% %ruler_names% was %murder_methods%.',
+                'Tragically, %ruler_names%\'s rule ended when the %ruler_titles% was %murder_methods%.',
+                'The golden age ended abruptly when %ruler_names% was %murder_methods%.'
+            ]);
+            
+            parser.addRule('invasion_ending', [
+                'But the kingdom fell when %invading_forces% swept across the borders and conquered the realm.',
+                'The reign ended in chaos as %invading_forces% invaded and destroyed everything %ruler_names% had built.',
+                'All was lost when %invading_forces% attacked and overwhelmed the kingdom\'s defenses.'
+            ]);
+            
+            parser.addRule('flee_ending', [
+                'The rule came to an end when %flee_reasons%, forcing %ruler_titles% %ruler_names% to %flee_destinations%.',
+                'When %flee_reasons%, %ruler_names% had no choice but to %flee_destinations%.',
+                'The kingdom was abandoned when %flee_reasons% and the %ruler_titles% %flee_destinations%.'
+            ]);
+        }
+        
+        // Generate a single kingdom story
+        function generateKingdomStory() {
+            const intro = parser.parse('%kingdom_intro%');
+            const middle = parser.parse('%kingdom_middle%');
+            
+            // Randomly choose an ending type
+            const endingTypes = ['murder', 'invasion', 'flee'];
+            const endingType = endingTypes[Math.floor(Math.random() * endingTypes.length)];
+            
+            let ending;
+            switch(endingType) {
+                case 'murder':
+                    ending = parser.parse('%murder_ending%');
+                    break;
+                case 'invasion':
+                    ending = parser.parse('%invasion_ending%');
+                    break;
+                case 'flee':
+                    ending = parser.parse('%flee_ending%');
+                    break;
+            }
+            
+            return {
+                story: `${intro} ${middle} ${ending}`,
+                endingType: endingType
+            };
+        }
+        
+        // Display a single generation
+        function displayGeneration(generationNumber, kingdomData) {
+            const container = document.getElementById('generations');
+            
+            const generationDiv = document.createElement('div');
+            generationDiv.className = 'generation';
+            
+            const endingClass = kingdomData.endingType;
+            const endingEmoji = {
+                'murder': '⚔️',
+                'invasion': '🏴‍☠️', 
+                'flee': '🏃‍♂️'
+            };
+            
+            generationDiv.innerHTML = `
+                <div class="generation-number">
+                    ${endingEmoji[endingClass]} Generation ${generationNumber}
+                </div>
+                <div class="story-text">
+                    ${kingdomData.story}
+                </div>
+                <div class="ending ${endingClass}">
+                    Fate: ${kingdomData.endingType.charAt(0).toUpperCase() + kingdomData.endingType.slice(1)}
+                </div>
+            `;
+            
+            container.appendChild(generationDiv);
+        }
+        
+        // Update statistics
+        function updateStats(endings) {
+            const murderCount = endings.filter(e => e === 'murder').length;
+            const invasionCount = endings.filter(e => e === 'invasion').length;
+            const fleeCount = endings.filter(e => e === 'flee').length;
+            
+            document.getElementById('murder-count').textContent = murderCount;
+            document.getElementById('invasion-count').textContent = invasionCount;
+            document.getElementById('flee-count').textContent = fleeCount;
+            
+            document.getElementById('stats').style.display = 'block';
+        }
+        
+        // Generate all 12 kingdoms
+        async function generateAllKingdoms() {
+            const loading = document.getElementById('loading');
+            const container = document.getElementById('generations');
+            
+            container.innerHTML = '';
+            loading.style.display = 'block';
+            
+            const endings = [];
+            
+            // Generate kingdoms with a slight delay for dramatic effect
+            for (let i = 1; i <= 12; i++) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                const kingdom = generateKingdomStory();
+                displayGeneration(i, kingdom);
+                endings.push(kingdom.endingType);
+            }
+            
+            loading.style.display = 'none';
+            updateStats(endings);
+        }
+        
+        // Generate a single kingdom
+        function generateSingleKingdom() {
+            const container = document.getElementById('generations');
+            const currentCount = container.children.length;
+            
+            const kingdom = generateKingdomStory();
+            displayGeneration(currentCount + 1, kingdom);
+            
+            // Update stats if there are kingdoms
+            if (container.children.length > 0) {
+                const endings = Array.from(container.children).map(child => {
+                    const endingDiv = child.querySelector('.ending');
+                    return endingDiv.className.split(' ')[1];
+                });
+                updateStats(endings);
+            }
+        }
+        
+        // Clear all generations
+        function clearGenerations() {
+            document.getElementById('generations').innerHTML = '';
+            document.getElementById('stats').style.display = 'none';
+        }
+        
+        // Initialize the grammar when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFantasyGrammar();
+        });
+    </script>
+</body>
+</html>

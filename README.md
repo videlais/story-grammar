@@ -40,6 +40,9 @@ This project is heavily inspired by the great work Kate Compton did and continue
     - [TypeScript Build](#typescript-build)
     - [Webpack Bundle](#webpack-bundle)
     - [Browser Usage](#browser-usage)
+  - [Interactive Examples](#interactive-examples)
+    - [🏰 Fantasy Kingdom Generator](#-fantasy-kingdom-generator)
+    - [Additional Examples](#additional-examples)
 
 ## Overview
 
@@ -355,3 +358,17 @@ Include the webpack bundle in your HTML:
 ```
 
 The library is exposed as `StoryGrammar` global object with the `Parser` class available as `StoryGrammar.Parser`.
+
+## Interactive Examples
+
+Visit the `docs/` folder for interactive examples demonstrating the Story Grammar library:
+
+### 🏰 Fantasy Kingdom Generator
+
+**File:** [`docs/fantasy-kingdom-example.html`](docs/fantasy-kingdom-example.html)
+
+A complete interactive example that generates 12 generations of fantasy kingdoms with dramatic endings.
+
+### Additional Examples
+
+See [`docs/README.md`](docs/README.md) for comprehensive documentation of all examples, usage patterns, and integration guides.
