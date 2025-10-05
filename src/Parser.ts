@@ -33,15 +33,51 @@ export interface WeightedRule {
   cumulativeWeights: number[];
 }
 
+export interface ConditionalRule {
+  conditions: Array<{
+    if?: (context: { [key: string]: string }) => boolean;
+    then: string[];
+    default?: never;
+  } | {
+    if?: never;
+    then?: never;
+    default: string[];
+  }>;
+}
+
+export interface SequentialRule {
+  values: string[];
+  index: number;
+  cycle: boolean;
+}
+
+export interface RangeRule {
+  min: number;
+  max: number;
+  step?: number;
+  type: 'integer' | 'float';
+}
+
+export interface TemplateRule {
+  template: string;
+  variables: { [key: string]: string[] };
+}
+
 export class Parser {
   private grammar: Grammar = {};
   private functionRules: Map<string, FunctionRule> = new Map();
   private weightedRules: Map<string, WeightedRule> = new Map();
+  private conditionalRules: Map<string, ConditionalRule> = new Map();
+  private sequentialRules: Map<string, SequentialRule> = new Map();
+  private rangeRules: Map<string, RangeRule> = new Map();
+  private templateRules: Map<string, TemplateRule> = new Map();
+  private referenceValues: Map<string, string> = new Map();
   private modifiers: Map<string, Modifier> = new Map();
   private variablePattern = /%([^%]+)%/g;
   private maxDepth = 100; // Prevent infinite recursion
   private randomSeed: number | null = null;
   private currentSeed: number = 0;
+  private currentContext: { [key: string]: string } = {};
 
   /**
    * Add a rule to the grammar
@@ -181,6 +217,232 @@ export class Parser {
    */
   public clearWeightedRules(): void {
     this.weightedRules.clear();
+  }
+
+  /**
+   * Add a conditional rule that selects values based on context
+   * @param key - The key to define
+   * @param rule - Conditional rule configuration with conditions and values
+   */
+  public addConditionalRule(key: string, rule: ConditionalRule): void {
+    if (!key || typeof key !== 'string') {
+      throw new Error('Key must be a non-empty string');
+    }
+    if (!rule || !Array.isArray(rule.conditions)) {
+      throw new Error('Rule must have a conditions array');
+    }
+    if (rule.conditions.length === 0) {
+      throw new Error('Conditions array cannot be empty');
+    }
+
+    // Validate conditions
+    let hasDefault = false;
+    for (const condition of rule.conditions) {
+      if ('default' in condition) {
+        if (hasDefault) {
+          throw new Error('Only one default condition is allowed');
+        }
+        hasDefault = true;
+        if (!Array.isArray(condition.default)) {
+          throw new Error('Default condition must have an array of values');
+        }
+      } else if ('if' in condition && 'then' in condition) {
+        if (typeof condition.if !== 'function') {
+          throw new Error('Condition "if" must be a function');
+        }
+        if (!Array.isArray(condition.then)) {
+          throw new Error('Condition "then" must be an array of values');
+        }
+      } else {
+        throw new Error('Each condition must have either "if/then" or "default"');
+      }
+    }
+
+    this.conditionalRules.set(key, {
+      conditions: rule.conditions.map(c => ({ ...c }))
+    });
+  }
+
+  /**
+   * Add a sequential rule that cycles through values in order
+   * @param key - The key to define
+   * @param values - Array of values to cycle through
+   * @param options - Configuration options
+   */
+  public addSequentialRule(key: string, values: string[], options: { cycle: boolean } = { cycle: true }): void {
+    if (!key || typeof key !== 'string') {
+      throw new Error('Key must be a non-empty string');
+    }
+    if (!Array.isArray(values) || values.length === 0) {
+      throw new Error('Values must be a non-empty array');
+    }
+
+    this.sequentialRules.set(key, {
+      values: [...values],
+      index: 0,
+      cycle: options.cycle
+    });
+  }
+
+  /**
+   * Add a range rule that generates numeric values within a range
+   * @param key - The key to define
+   * @param config - Range configuration
+   */
+  public addRangeRule(key: string, config: { min: number; max: number; step?: number; type: 'integer' | 'float' }): void {
+    if (!key || typeof key !== 'string') {
+      throw new Error('Key must be a non-empty string');
+    }
+    if (typeof config.min !== 'number' || typeof config.max !== 'number') {
+      throw new Error('Min and max must be numbers');
+    }
+    if (config.min >= config.max) {
+      throw new Error('Min must be less than max');
+    }
+    if (config.step !== undefined && (typeof config.step !== 'number' || config.step <= 0)) {
+      throw new Error('Step must be a positive number');
+    }
+    if (!['integer', 'float'].includes(config.type)) {
+      throw new Error('Type must be "integer" or "float"');
+    }
+
+    this.rangeRules.set(key, {
+      min: config.min,
+      max: config.max,
+      step: config.step,
+      type: config.type
+    });
+  }
+
+  /**
+   * Add a template rule that combines multiple variables into a structured format
+   * @param key - The key to define
+   * @param rule - Template rule configuration
+   */
+  public addTemplateRule(key: string, rule: TemplateRule): void {
+    if (!key || typeof key !== 'string') {
+      throw new Error('Key must be a non-empty string');
+    }
+    if (!rule.template || typeof rule.template !== 'string') {
+      throw new Error('Template must be a non-empty string');
+    }
+    if (!rule.variables || typeof rule.variables !== 'object') {
+      throw new Error('Variables must be an object');
+    }
+
+    // Validate that all variables in template exist in variables object
+    const templateVars = this.findVariables(rule.template);
+    for (const variable of templateVars) {
+      if (!(variable in rule.variables)) {
+        throw new Error(`Template variable '${variable}' not found in variables object`);
+      }
+      if (!Array.isArray(rule.variables[variable])) {
+        throw new Error(`Variable '${variable}' must be an array`);
+      }
+    }
+
+    this.templateRules.set(key, {
+      template: rule.template,
+      variables: { ...rule.variables }
+    });
+  }
+
+  /**
+   * Remove a conditional rule
+   */
+  public removeConditionalRule(key: string): boolean {
+    return this.conditionalRules.delete(key);
+  }
+
+  /**
+   * Remove a sequential rule
+   */
+  public removeSequentialRule(key: string): boolean {
+    return this.sequentialRules.delete(key);
+  }
+
+  /**
+   * Remove a range rule
+   */
+  public removeRangeRule(key: string): boolean {
+    return this.rangeRules.delete(key);
+  }
+
+  /**
+   * Remove a template rule
+   */
+  public removeTemplateRule(key: string): boolean {
+    return this.templateRules.delete(key);
+  }
+
+  /**
+   * Check if a conditional rule exists
+   */
+  public hasConditionalRule(key: string): boolean {
+    return this.conditionalRules.has(key);
+  }
+
+  /**
+   * Check if a sequential rule exists
+   */
+  public hasSequentialRule(key: string): boolean {
+    return this.sequentialRules.has(key);
+  }
+
+  /**
+   * Check if a range rule exists
+   */
+  public hasRangeRule(key: string): boolean {
+    return this.rangeRules.has(key);
+  }
+
+  /**
+   * Check if a template rule exists
+   */
+  public hasTemplateRule(key: string): boolean {
+    return this.templateRules.has(key);
+  }
+
+  /**
+   * Clear all conditional rules
+   */
+  public clearConditionalRules(): void {
+    this.conditionalRules.clear();
+  }
+
+  /**
+   * Clear all sequential rules
+   */
+  public clearSequentialRules(): void {
+    this.sequentialRules.clear();
+  }
+
+  /**
+   * Clear all range rules
+   */
+  public clearRangeRules(): void {
+    this.rangeRules.clear();
+  }
+
+  /**
+   * Clear all template rules
+   */
+  public clearTemplateRules(): void {
+    this.templateRules.clear();
+  }
+
+  /**
+   * Reset a sequential rule to start from the beginning
+   * @param key - The sequential rule key to reset
+   * @returns True if rule was reset, false if it doesn't exist
+   */
+  public resetSequentialRule(key: string): boolean {
+    const rule = this.sequentialRules.get(key);
+    if (rule) {
+      rule.index = 0;
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -382,12 +644,20 @@ export class Parser {
   /**
    * Parse a text string and expand all variables
    * @param text - The text to parse
+   * @param preserveContext - Whether to preserve context from previous parse calls
    * @returns Parsed text with variables expanded
    */
-  public parse(text: string): string {
+  public parse(text: string, preserveContext: boolean = false): string {
     if (typeof text !== 'string') {
       throw new Error('Text must be a string');
     }
+    
+    // Clear context unless explicitly preserving it
+    if (!preserveContext) {
+      this.currentContext = {};
+      this.referenceValues.clear();
+    }
+    
     const expanded = this.expandVariables(text, 0);
     return this.applyModifiers(expanded, { originalText: text });
   }
@@ -409,7 +679,17 @@ export class Parser {
     return text.replace(this.variablePattern, (match, key) => {
       let selectedValue: string;
       
-      // Check function rules first
+      // Handle reference rules first (syntax: @key)
+      if (key.startsWith('@')) {
+        const refKey = key.substring(1);
+        const refValue = this.referenceValues.get(refKey);
+        if (refValue !== undefined) {
+          return refValue;
+        }
+        return match; // Return original if reference not found
+      }
+      
+      // Check function rules
       const functionRule = this.functionRules.get(key);
       if (functionRule) {
         try {
@@ -425,20 +705,48 @@ export class Parser {
           throw new Error(`Error executing function rule '${key}': ${error instanceof Error ? error.message : String(error)}`);
         }
       } else {
-        // Check weighted rules second
-        const weightedRule = this.weightedRules.get(key);
-        if (weightedRule) {
-          selectedValue = this.getWeightedRandomValue(weightedRule);
+        // Check conditional rules
+        const conditionalRule = this.conditionalRules.get(key);
+        if (conditionalRule) {
+          selectedValue = this.getConditionalValue(conditionalRule);
         } else {
-          // Fall back to static rules
-          const values = this.grammar[key];
-          if (!values || values.length === 0) {
-            // Return the original variable if no rule is found
-            return match;
+          // Check sequential rules
+          const sequentialRule = this.sequentialRules.get(key);
+          if (sequentialRule) {
+            selectedValue = this.getSequentialValue(sequentialRule);
+          } else {
+            // Check range rules
+            const rangeRule = this.rangeRules.get(key);
+            if (rangeRule) {
+              selectedValue = this.getRangeValue(rangeRule);
+            } else {
+              // Check template rules
+              const templateRule = this.templateRules.get(key);
+              if (templateRule) {
+                selectedValue = this.getTemplateValue(templateRule);
+              } else {
+                // Check weighted rules
+                const weightedRule = this.weightedRules.get(key);
+                if (weightedRule) {
+                  selectedValue = this.getWeightedRandomValue(weightedRule);
+                } else {
+                  // Fall back to static rules
+                  const values = this.grammar[key];
+                  if (!values || values.length === 0) {
+                    // Return the original variable if no rule is found
+                    return match;
+                  }
+                  selectedValue = this.getRandomValue(values);
+                }
+              }
+            }
           }
-          selectedValue = this.getRandomValue(values);
         }
       }
+      
+      // Store value for potential reference and update context
+      this.referenceValues.set(key, selectedValue);
+      this.currentContext[key] = selectedValue;
       
       // Recursively expand variables in the selected value
       return this.expandVariables(selectedValue, depth + 1);
@@ -464,6 +772,88 @@ export class Parser {
     }
     
     return modifiedText;
+  }
+
+  /**
+   * Get a value from a conditional rule based on current context
+   * @param conditionalRule - The conditional rule to evaluate
+   * @returns A value based on matching condition
+   */
+  private getConditionalValue(conditionalRule: ConditionalRule): string {
+    for (const condition of conditionalRule.conditions) {
+      if ('if' in condition && condition.if && condition.then) {
+        if (condition.if(this.currentContext)) {
+          return this.getRandomValue(condition.then);
+        }
+      } else if ('default' in condition && condition.default) {
+        return this.getRandomValue(condition.default);
+      }
+    }
+    throw new Error('No matching condition found and no default provided');
+  }
+
+  /**
+   * Get the next value from a sequential rule
+   * @param sequentialRule - The sequential rule to get value from
+   * @returns The next value in sequence
+   */
+  private getSequentialValue(sequentialRule: SequentialRule): string {
+    if (sequentialRule.index >= sequentialRule.values.length) {
+      if (sequentialRule.cycle) {
+        sequentialRule.index = 0;
+      } else {
+        return sequentialRule.values[sequentialRule.values.length - 1];
+      }
+    }
+    
+    const value = sequentialRule.values[sequentialRule.index];
+    sequentialRule.index++;
+    return value;
+  }
+
+  /**
+   * Generate a value from a range rule
+   * @param rangeRule - The range rule configuration
+   * @returns A value within the specified range
+   */
+  private getRangeValue(rangeRule: RangeRule): string {
+    const { min, max, step, type } = rangeRule;
+    
+    if (step !== undefined) {
+      // Generate stepped values
+      const numSteps = Math.floor((max - min) / step);
+      const stepIndex = Math.floor(this.getSeededRandom() * (numSteps + 1));
+      const value = min + (stepIndex * step);
+      return type === 'integer' ? Math.round(value).toString() : value.toString();
+    } else {
+      // Generate continuous values
+      const value = min + (this.getSeededRandom() * (max - min));
+      return type === 'integer' ? Math.floor(value).toString() : value.toString();
+    }
+  }
+
+  /**
+   * Generate a value from a template rule
+   * @param templateRule - The template rule configuration
+   * @returns A value with template variables expanded
+   */
+  private getTemplateValue(templateRule: TemplateRule): string {
+    // Create a temporary parser context for template variables
+    const tempContext = { ...this.currentContext };
+    
+    // Expand template using its own variables
+    let result = templateRule.template;
+    const templateVars = this.findVariables(result);
+    
+    for (const variable of templateVars) {
+      if (variable in templateRule.variables) {
+        const value = this.getRandomValue(templateRule.variables[variable]);
+        result = result.replace(new RegExp(`%${variable}%`, 'g'), value);
+        tempContext[variable] = value;
+      }
+    }
+    
+    return result;
   }
 
   /**
@@ -512,33 +902,49 @@ export class Parser {
   }
 
   /**
-   * Check if a rule exists (static, function, or weighted rule)
+   * Check if a rule exists (any rule type)
    * @param key - The key to check
    * @returns True if the rule exists, false otherwise
    */
   public hasRule(key: string): boolean {
-    return this.functionRules.has(key) || this.weightedRules.has(key) || key in this.grammar;
+    return this.functionRules.has(key) || 
+           this.conditionalRules.has(key) ||
+           this.sequentialRules.has(key) ||
+           this.rangeRules.has(key) ||
+           this.templateRules.has(key) ||
+           this.weightedRules.has(key) || 
+           key in this.grammar;
   }
 
   /**
-   * Remove a rule (static, function, or weighted rule)
+   * Remove a rule (any rule type)
    * @param key - The key to remove
    * @returns True if rule was removed, false if it didn't exist
    */
   public removeRule(key: string): boolean {
     const removedFunction = this.functionRules.delete(key);
+    const removedConditional = this.conditionalRules.delete(key);
+    const removedSequential = this.sequentialRules.delete(key);
+    const removedRange = this.rangeRules.delete(key);
+    const removedTemplate = this.templateRules.delete(key);
     const removedWeighted = this.weightedRules.delete(key);
     const removedStatic = key in this.grammar ? (delete this.grammar[key], true) : false;
-    return removedFunction || removedWeighted || removedStatic;
+    return removedFunction || removedConditional || removedSequential || removedRange || removedTemplate || removedWeighted || removedStatic;
   }
 
   /**
-   * Clear all rules (static, function, and weighted rules)
+   * Clear all rules (all rule types)
    */
   public clear(): void {
     this.grammar = {};
     this.functionRules.clear();
+    this.conditionalRules.clear();
+    this.sequentialRules.clear();
+    this.rangeRules.clear();
+    this.templateRules.clear();
     this.weightedRules.clear();
+    this.referenceValues.clear();
+    this.currentContext = {};
   }
 
   /**
@@ -652,5 +1058,22 @@ export class Parser {
    */
   public getRandomSeed(): number | null {
     return this.randomSeed;
+  }
+
+  /**
+   * Clear all reference values and reset context
+   * Useful for starting fresh generation without clearing rules
+   */
+  public clearReferences(): void {
+    this.referenceValues.clear();
+    this.currentContext = {};
+  }
+
+  /**
+   * Get the current context of generated values
+   * @returns Copy of current context
+   */
+  public getContext(): { [key: string]: string } {
+    return { ...this.currentContext };
   }
 }

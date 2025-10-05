@@ -73,6 +73,11 @@ The Story Grammar Parser allows you to create complex, dynamic text generation s
 - **Nested Variables**: Support for deeply nested rule references
 - **Function Rules**: Dynamic rule generation using JavaScript functions
 - **Weighted Rules**: Probability-based selection with custom weights
+- **Conditional Rules**: Context-aware selection based on previous values
+- **Sequential Rules**: Ordered cycling through values with reset capability
+- **Range Rules**: Numeric range generation (integers and floats)
+- **Template Rules**: Structured multi-variable combinations
+- **Reference Rules**: Reuse previously generated values for consistency
 - **Seeded Randomness**: Deterministic results for testing and reproducibility
 - **Modifier System**: Apply text transformations during generation
 - **Circular Reference Detection**: Automatic validation to prevent infinite loops
@@ -199,6 +204,120 @@ Weighted rules are ideal for:
 - Weather patterns (sunny days more common than storms)
 - Character traits (normal attributes more common than exceptional ones)
 - Any scenario where natural distribution isn't uniform
+
+### Conditional Rules
+
+Create context-aware rules that select values based on previously generated content:
+
+```typescript
+parser.addRule('character_type', ['warrior', 'mage', 'rogue']);
+parser.addConditionalRule('weapon', {
+  conditions: [
+    {
+      if: (context) => context.character_type === 'warrior',
+      then: ['sword', 'axe', 'hammer']
+    },
+    {
+      if: (context) => context.character_type === 'mage', 
+      then: ['staff', 'wand', 'orb']
+    },
+    {
+      default: ['dagger', 'bow'] // Fallback for any other case
+    }
+  ]
+});
+
+console.log(parser.parse('A %character_type% wielding a %weapon%'));
+// Output: "A warrior wielding a sword" (weapon matches character type)
+```
+
+### Sequential Rules
+
+Generate values in a specific order, with optional cycling:
+
+```typescript
+// Cycling sequence (repeats after end)
+parser.addSequentialRule('day', ['Monday', 'Tuesday', 'Wednesday'], { cycle: true });
+
+// Non-cycling sequence (stops at last value)  
+parser.addSequentialRule('countdown', ['3', '2', '1', 'GO!'], { cycle: false });
+
+console.log(parser.parse('%day%')); // Monday
+console.log(parser.parse('%day%')); // Tuesday
+console.log(parser.parse('%day%')); // Wednesday
+console.log(parser.parse('%day%')); // Monday (cycles back)
+
+// Reset a sequential rule to start over
+parser.resetSequentialRule('countdown');
+```
+
+### Range Rules
+
+Generate numeric values within specified ranges:
+
+```typescript
+// Integer ranges
+parser.addRangeRule('age', { min: 18, max: 65, type: 'integer' });
+
+// Float ranges with custom steps
+parser.addRangeRule('height', { min: 5.0, max: 6.5, step: 0.1, type: 'float' });
+
+// Percentage scores
+parser.addRangeRule('score', { min: 0, max: 100, type: 'integer' });
+
+console.log(parser.parse('Character: age %age%, height %height%ft, score %score%'));
+// Output: "Character: age 34, height 5.7ft, score 87"
+```
+
+### Template Rules
+
+Create structured combinations with their own variable sets:
+
+```typescript
+parser.addTemplateRule('npc', {
+  template: '%name% the %adjective% %profession%',
+  variables: {
+    name: ['Aldric', 'Brina', 'Caius'],
+    adjective: ['brave', 'wise', 'cunning'],
+    profession: ['knight', 'merchant', 'scholar']
+  }
+});
+
+console.log(parser.parse('Meet %npc%'));
+// Output: "Meet Brina the cunning merchant"
+```
+
+### Reference Rules
+
+Reuse previously generated values for consistency:
+
+```typescript
+parser.addRule('hero', ['Alice', 'Bob', 'Charlie']);
+parser.addRule('quest', ['rescue the princess', 'slay the dragon']);
+
+// Use @ prefix to reference previously generated values
+const story = parser.parse(
+  '%hero% begins to %quest%. Later, %@hero% succeeds and %@hero% becomes legendary.',
+  true  // preserveContext = true
+);
+// Output: "Alice begins to slay the dragon. Later, Alice succeeds and Alice becomes legendary."
+```
+
+**Advanced Rule Combinations:**
+
+All rule types can work together seamlessly:
+
+```typescript
+parser.addConditionalRule('spell_power', {
+  conditions: [
+    { if: (ctx) => ctx.character_type === 'mage', then: ['devastating', 'reality-bending'] },
+    { default: ['weak', 'fizzling'] }
+  ]
+});
+
+parser.parse('%character_type% %@character_type% casts a %spell_power% spell', true);
+// Output: "mage mage casts a devastating spell" (consistent character, appropriate power)
+```
 
 ### Seeded Randomness
 
@@ -513,6 +632,42 @@ The library is exposed as `StoryGrammar` global object with the `Parser` class a
 - `hasWeightedRule(key: string): boolean` - Check if weighted rule exists
 - `clearWeightedRules(): void` - Clear all weighted rules
 
+#### Conditional Rule Methods
+
+- `addConditionalRule(key: string, condition: ConditionalRule): void` - Add a context-aware conditional rule
+- `removeConditionalRule(key: string): boolean` - Remove a conditional rule
+- `hasConditionalRule(key: string): boolean` - Check if conditional rule exists
+- `clearConditionalRules(): void` - Clear all conditional rules
+
+#### Sequential Rule Methods
+
+- `addSequentialRule(key: string, values: string[]): void` - Add a sequential rule that cycles through values
+- `resetSequentialRule(key: string): void` - Reset sequential rule to first value
+- `removeSequentialRule(key: string): boolean` - Remove a sequential rule
+- `hasSequentialRule(key: string): boolean` - Check if sequential rule exists
+- `clearSequentialRules(): void` - Clear all sequential rules
+
+#### Range Rule Methods
+
+- `addRangeRule(key: string, min: number, max: number, isInteger?: boolean): void` - Add a numeric range rule
+- `removeRangeRule(key: string): boolean` - Remove a range rule
+- `hasRangeRule(key: string): boolean` - Check if range rule exists
+- `clearRangeRules(): void` - Clear all range rules
+
+#### Template Rule Methods
+
+- `addTemplateRule(key: string, template: string, slots: string[]): void` - Add a template rule with variable slots
+- `removeTemplateRule(key: string): boolean` - Remove a template rule
+- `hasTemplateRule(key: string): boolean` - Check if template rule exists
+- `clearTemplateRules(): void` - Clear all template rules
+
+#### Reference Rule Methods
+
+- `addReferenceRule(key: string, referenceKey: string): void` - Add a rule that references previously generated values
+- `removeReferenceRule(key: string): boolean` - Remove a reference rule
+- `hasReferenceRule(key: string): boolean` - Check if reference rule exists
+- `clearReferenceRules(): void` - Clear all reference rules
+
 #### Parsing
 
 - `parse(text: string): string` - Parse text and expand all variables
@@ -553,6 +708,30 @@ interface WeightedRule {
   values: string[];
   weights: number[];
   cumulativeWeights: number[];
+}
+
+interface ConditionalRule {
+  (context: Map<string, string>): string;
+}
+
+interface SequentialRule {
+  values: string[];
+  currentIndex: number;
+}
+
+interface RangeRule {
+  min: number;
+  max: number;
+  isInteger: boolean;
+}
+
+interface TemplateRule {
+  template: string;
+  slots: string[];
+}
+
+interface ReferenceRule {
+  referenceKey: string;
 }
 
 interface Grammar {

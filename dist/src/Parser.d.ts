@@ -28,15 +28,51 @@ export interface WeightedRule {
     weights: number[];
     cumulativeWeights: number[];
 }
+export interface ConditionalRule {
+    conditions: Array<{
+        if?: (context: {
+            [key: string]: string;
+        }) => boolean;
+        then: string[];
+        default?: never;
+    } | {
+        if?: never;
+        then?: never;
+        default: string[];
+    }>;
+}
+export interface SequentialRule {
+    values: string[];
+    index: number;
+    cycle: boolean;
+}
+export interface RangeRule {
+    min: number;
+    max: number;
+    step?: number;
+    type: 'integer' | 'float';
+}
+export interface TemplateRule {
+    template: string;
+    variables: {
+        [key: string]: string[];
+    };
+}
 export declare class Parser {
     private grammar;
     private functionRules;
     private weightedRules;
+    private conditionalRules;
+    private sequentialRules;
+    private rangeRules;
+    private templateRules;
+    private referenceValues;
     private modifiers;
     private variablePattern;
     private maxDepth;
     private randomSeed;
     private currentSeed;
+    private currentContext;
     /**
      * Add a rule to the grammar
      * @param key - The key to define
@@ -94,6 +130,92 @@ export declare class Parser {
      */
     clearWeightedRules(): void;
     /**
+     * Add a conditional rule that selects values based on context
+     * @param key - The key to define
+     * @param rule - Conditional rule configuration with conditions and values
+     */
+    addConditionalRule(key: string, rule: ConditionalRule): void;
+    /**
+     * Add a sequential rule that cycles through values in order
+     * @param key - The key to define
+     * @param values - Array of values to cycle through
+     * @param options - Configuration options
+     */
+    addSequentialRule(key: string, values: string[], options?: {
+        cycle: boolean;
+    }): void;
+    /**
+     * Add a range rule that generates numeric values within a range
+     * @param key - The key to define
+     * @param config - Range configuration
+     */
+    addRangeRule(key: string, config: {
+        min: number;
+        max: number;
+        step?: number;
+        type: 'integer' | 'float';
+    }): void;
+    /**
+     * Add a template rule that combines multiple variables into a structured format
+     * @param key - The key to define
+     * @param rule - Template rule configuration
+     */
+    addTemplateRule(key: string, rule: TemplateRule): void;
+    /**
+     * Remove a conditional rule
+     */
+    removeConditionalRule(key: string): boolean;
+    /**
+     * Remove a sequential rule
+     */
+    removeSequentialRule(key: string): boolean;
+    /**
+     * Remove a range rule
+     */
+    removeRangeRule(key: string): boolean;
+    /**
+     * Remove a template rule
+     */
+    removeTemplateRule(key: string): boolean;
+    /**
+     * Check if a conditional rule exists
+     */
+    hasConditionalRule(key: string): boolean;
+    /**
+     * Check if a sequential rule exists
+     */
+    hasSequentialRule(key: string): boolean;
+    /**
+     * Check if a range rule exists
+     */
+    hasRangeRule(key: string): boolean;
+    /**
+     * Check if a template rule exists
+     */
+    hasTemplateRule(key: string): boolean;
+    /**
+     * Clear all conditional rules
+     */
+    clearConditionalRules(): void;
+    /**
+     * Clear all sequential rules
+     */
+    clearSequentialRules(): void;
+    /**
+     * Clear all range rules
+     */
+    clearRangeRules(): void;
+    /**
+     * Clear all template rules
+     */
+    clearTemplateRules(): void;
+    /**
+     * Reset a sequential rule to start from the beginning
+     * @param key - The sequential rule key to reset
+     * @returns True if rule was reset, false if it doesn't exist
+     */
+    resetSequentialRule(key: string): boolean;
+    /**
      * Add a modifier to the grammar
      * @param modifier - The modifier to add
      */
@@ -137,9 +259,10 @@ export declare class Parser {
     /**
      * Parse a text string and expand all variables
      * @param text - The text to parse
+     * @param preserveContext - Whether to preserve context from previous parse calls
      * @returns Parsed text with variables expanded
      */
-    parse(text: string): string;
+    parse(text: string, preserveContext?: boolean): string;
     /**
      * Recursively expand variables in text
      * @param text - The text to expand
@@ -154,6 +277,30 @@ export declare class Parser {
      * @returns Modified text
      */
     private applyModifiers;
+    /**
+     * Get a value from a conditional rule based on current context
+     * @param conditionalRule - The conditional rule to evaluate
+     * @returns A value based on matching condition
+     */
+    private getConditionalValue;
+    /**
+     * Get the next value from a sequential rule
+     * @param sequentialRule - The sequential rule to get value from
+     * @returns The next value in sequence
+     */
+    private getSequentialValue;
+    /**
+     * Generate a value from a range rule
+     * @param rangeRule - The range rule configuration
+     * @returns A value within the specified range
+     */
+    private getRangeValue;
+    /**
+     * Generate a value from a template rule
+     * @param templateRule - The template rule configuration
+     * @returns A value with template variables expanded
+     */
+    private getTemplateValue;
     /**
      * Generate a seeded random number between 0 and 1
      * Uses Linear Congruential Generator (LCG) when seed is set
@@ -173,19 +320,19 @@ export declare class Parser {
      */
     private getWeightedRandomValue;
     /**
-     * Check if a rule exists (static, function, or weighted rule)
+     * Check if a rule exists (any rule type)
      * @param key - The key to check
      * @returns True if the rule exists, false otherwise
      */
     hasRule(key: string): boolean;
     /**
-     * Remove a rule (static, function, or weighted rule)
+     * Remove a rule (any rule type)
      * @param key - The key to remove
      * @returns True if rule was removed, false if it didn't exist
      */
     removeRule(key: string): boolean;
     /**
-     * Clear all rules (static, function, and weighted rules)
+     * Clear all rules (all rule types)
      */
     clear(): void;
     /**
@@ -236,5 +383,17 @@ export declare class Parser {
      * @returns Current seed or null if using Math.random()
      */
     getRandomSeed(): number | null;
+    /**
+     * Clear all reference values and reset context
+     * Useful for starting fresh generation without clearing rules
+     */
+    clearReferences(): void;
+    /**
+     * Get the current context of generated values
+     * @returns Copy of current context
+     */
+    getContext(): {
+        [key: string]: string;
+    };
 }
 //# sourceMappingURL=Parser.d.ts.map
