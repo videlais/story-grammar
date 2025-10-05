@@ -1,3 +1,15 @@
+# MacOS
+.DS_Store
+.AppleDouble
+
+# Thumbnails
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
 # Logs
 logs
 *.log

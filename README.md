@@ -13,6 +13,7 @@ This project is heavily inspired by the great work Kate Compton did and continue
 
 - [Story Grammar](#story-grammar)
   - [Table of Contents](#table-of-contents)
+  - [Interactive Examples](#interactive-examples)
   - [Overview](#overview)
     - [Key Features](#key-features)
   - [Features](#features)
@@ -79,8 +80,14 @@ This project is heavily inspired by the great work Kate Compton did and continue
       - [Available English Modifiers](#available-english-modifiers)
       - [Configuration](#configuration)
     - [Types](#types)
-  - [Interactive Examples](#interactive-examples)
-    - [Additional Examples](#additional-examples)
+
+## Interactive Examples
+
+Visit the `docs/` folder for interactive examples demonstrating the Story Grammar library with the new modular modifier API:
+
+- **[Tarot Three-Card Spread](docs/tarot-three-card-spread.html)** - Generate mystical three-card tarot readings with Past • Present • Future spreads using Story Grammar's combinatorial rules. Features a complete 78-card tarot deck, dynamic card combinations and interpretations, and 474,552 possible combinations.
+
+- **[Weapon Loot Table Generator](docs/weapon-loot-generator.html)** - Generate RPG weapon loot with authentic rarity distribution using Story Grammar's weighted rules system. Includes 17 weapon types, realistic drop rates (Common 38.06%, Magic 50%, Rare 10.44%, Unique 1.5%), dynamic stats and special effects by rarity, and a color-coded rarity system with visual effects.
 
 ## Overview
 
@@ -993,26 +1000,4 @@ interface Modifier {
 }
 ```
 
-## Interactive Examples
 
-Visit the `docs/` folder for interactive examples demonstrating the Story Grammar library with the new modular modifier API:
-
-- **🏰 Fantasy Kingdom Generator** - [Live Demo](https://videlais.github.io/story-grammar/fantasy-kingdom-example.html) | [Source](docs/fantasy-kingdom-example.html)
-  - Interactive generator creating 12 generations of kingdoms with dramatic endings
-  - Demonstrates weighted rules, conditional events, and sequential dynasty progression
-
-- **🎲 Advanced Rules Showcase** - [Live Demo](https://videlais.github.io/story-grammar/function-rules-example.html) | [Source](docs/function-rules-example.html)
-  - Comprehensive demonstration of all 8 rule types working together
-  - Features character creation, context-aware selection, and sequential progression
-
-- **⚖️ Weighted Rules Example** - [Live Demo](https://videlais.github.io/story-grammar/weighted-rules-example.html) | [Source](docs/weighted-rules-example.html)
-  - Probability-based selection with realistic distribution patterns
-  - Perfect for game loot systems and natural frequency modeling
-
-- **🐉 D&D Encounter Generator** - [Live Demo](https://videlais.github.io/story-grammar/dnd-encounter-generator.html) | [Source](docs/dnd-encounter-generator.html)
-  - Dynamic encounter generation using real D&D monster data from external APIs
-  - Showcases template rules, conditional monster selection, and range-based rewards
-
-### Additional Examples
-
-See [`docs/README.md`](docs/README.md) for comprehensive documentation of all examples, usage patterns, and integration guides.
