@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Function Rules Example - Story Grammar</title>
+    <title>Advanced Rules Showcase - Story Grammar</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -75,13 +75,19 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎲 Function Rules Example</h1>
-        <p>This example demonstrates <strong>dynamic rule generation</strong> using function-based rules in Story Grammar. Unlike static rules that contain fixed arrays, function rules generate values dynamically each time they're called.</p>
+        <h1>🎲 Advanced Rules Showcase</h1>
+        <p>This example demonstrates <strong>all 8 rule types</strong> available in Story Grammar: Static, Function, Weighted, Conditional, Sequential, Range, Template, and Reference rules working together to create dynamic, context-aware narratives.</p>
         
         <div class="example-section">
-            <h3>Static vs Function Rules</h3>
-            <p><strong>Static Rule:</strong> <code>weather: ['sunny', 'rainy', 'cloudy']</code></p>
-            <p><strong>Function Rule:</strong> <code>randomNumber: () => [Math.floor(Math.random() * 100).toString()]</code></p>
+            <h3>Rule Type Overview</h3>
+            <p><strong>Static:</strong> <code>weather: ['sunny', 'rainy', 'cloudy']</code></p>
+            <p><strong>Function:</strong> <code>randomNumber: () => [Math.floor(Math.random() * 100).toString()]</code></p>
+            <p><strong>Weighted:</strong> <code>rarity: ['common', 'rare', 'legendary'], weights: [0.7, 0.25, 0.05]</code></p>
+            <p><strong>Conditional:</strong> <code>context-aware selection based on previously generated values</code></p>
+            <p><strong>Sequential:</strong> <code>cycles through values in order</code></p>
+            <p><strong>Range:</strong> <code>generates numbers between min and max</code></p>
+            <p><strong>Template:</strong> <code>structured combinations with slots</code></p>
+            <p><strong>Reference:</strong> <code>reuses previously generated values</code></p>
         </div>
 
         <div class="example-section">
@@ -91,34 +97,45 @@
 
         <div class="controls">
             <button onclick="generateExamples()">🎲 Generate New Examples</button>
+            <button onclick="resetSequential()">🔄 Reset Sequential Rules</button>
             <button onclick="showCode()">📝 Show Code</button>
         </div>
 
         <div id="code-section" style="display: none;">
             <h3>Implementation Code</h3>
             <div class="code-block">
-// Create parser and add static rules
+// Create parser with all 8 rule types
 const parser = new Parser();
-parser.addRule('character', ['Alice', 'Bob', 'Charlie']);
-parser.addRule('location', ['forest', 'castle', 'tavern']);
 
-// Add function rules for dynamic content
-parser.addFunctionRule('randomNumber', () => {
-    return [Math.floor(Math.random() * 100).toString()];
+// 1. Static Rules - Fixed arrays
+parser.addRule('class', ['Warrior', 'Mage', 'Rogue']);
+
+// 2. Function Rules - Dynamic generation  
+parser.addFunctionRule('timestamp', () => [new Date().toLocaleTimeString()]);
+
+// 3. Weighted Rules - Probability-based
+parser.addWeightedRule('rarity', ['common', 'rare'], [0.8, 0.2]);
+
+// 4. Conditional Rules - Context-aware
+parser.addConditionalRule('name', (context) => {
+    const cls = context.get('class');
+    return cls === 'Mage' ? 'Gandalf' : 'Conan';
 });
 
-parser.addFunctionRule('diceRoll', () => {
-    const roll = Math.floor(Math.random() * 20) + 1;
-    return [`${roll} (d20)`];
-});
+// 5. Sequential Rules - Ordered cycling
+parser.addSequentialRule('chapter', ['I', 'II', 'III']);
 
-parser.addFunctionRule('timestamp', () => {
-    const now = new Date();
-    return [now.toLocaleTimeString()];
-});
+// 6. Range Rules - Numeric ranges
+parser.addRangeRule('level', 1, 20, true);
 
-// Use in templates
-const result = parser.parse('%character% rolls %diceRoll% at %timestamp%');
+// 7. Template Rules - Structured combinations
+parser.addTemplateRule('intro', '{name} the {class}', ['name', 'class']);
+
+// 8. Reference Rules - Reuse values
+parser.addReferenceRule('character', 'intro');
+
+// Generate: "Gandalf the Mage appears in Chapter I"
+const result = parser.parse('@character appears in Chapter %chapter%');
             </div>
         </div>
     </div>
@@ -127,44 +144,92 @@ const result = parser.parse('%character% rolls %diceRoll% at %timestamp%');
     <script>
         const parser = new StoryGrammar.Parser();
 
-        // Add static rules
-        parser.addRule('character', ['Alice the Warrior', 'Bob the Mage', 'Charlie the Rogue']);
+        // 1. Static Rules - Fixed arrays
+        parser.addRule('character_class', ['Warrior', 'Mage', 'Rogue', 'Cleric']);
         parser.addRule('location', ['enchanted forest', 'ancient castle', 'bustling tavern', 'misty mountain']);
         parser.addRule('action', ['discovers', 'encounters', 'searches for', 'battles']);
 
-        // Add function rules
-        parser.addFunctionRule('randomNumber', () => {
-            const num = Math.floor(Math.random() * 100) + 1;
-            return [num.toString()];
-        });
-
-        parser.addFunctionRule('diceRoll', () => {
-            const roll = Math.floor(Math.random() * 20) + 1;
-            return [`${roll} (d20)`];
-        });
-
+        // 2. Function Rules - Dynamic generation
         parser.addFunctionRule('timestamp', () => {
-            const now = new Date();
-            return [now.toLocaleTimeString()];
+            return [new Date().toLocaleTimeString()];
         });
 
-        parser.addFunctionRule('temperature', () => {
-            const temp = Math.floor(Math.random() * 50) + 32; // 32-82°F
-            return [`${temp}°F`];
+        parser.addFunctionRule('weather_condition', () => {
+            const conditions = ['sunny', 'rainy', 'foggy', 'stormy'];
+            const temp = Math.floor(Math.random() * 40) + 32; // 32-72°F
+            const condition = conditions[Math.floor(Math.random() * conditions.length)];
+            return [`${condition} (${temp}°F)`];
         });
 
-        parser.addFunctionRule('goldAmount', () => {
-            const gold = Math.floor(Math.random() * 500) + 10;
-            return [gold.toString()];
+        // 3. Weighted Rules - Probability-based selection
+        parser.addWeightedRule('item_rarity', 
+            ['common', 'uncommon', 'rare', 'legendary'], 
+            [0.6, 0.25, 0.12, 0.03] // 60%, 25%, 12%, 3%
+        );
+
+        parser.addWeightedRule('encounter_type',
+            ['peaceful', 'challenging', 'dangerous'],
+            [0.5, 0.35, 0.15]
+        );
+
+        // 4. Range Rules - Numeric ranges
+        parser.addRangeRule('level', 1, 20, true);      // Integer levels 1-20
+        parser.addRangeRule('gold', 10, 1000, true);    // Gold pieces
+        parser.addRangeRule('health_percent', 0.1, 1.0, false); // Health as decimal
+
+        // 5. Sequential Rules - Ordered cycling
+        parser.addSequentialRule('chapter', ['Prologue', 'Chapter I', 'Chapter II', 'Chapter III', 'Epilogue']);
+        parser.addSequentialRule('phase', ['Dawn', 'Morning', 'Noon', 'Evening', 'Night']);
+
+        // 6. Conditional Rules - Context-aware selection
+        parser.addConditionalRule('character_name', (context) => {
+            const charClass = context.get('character_class');
+            const names = {
+                'Warrior': ['Thorgar', 'Brianna', 'Marcus'],
+                'Mage': ['Zephyr', 'Luna', 'Arcturus'],
+                'Rogue': ['Shade', 'Whisper', 'Nyx'],
+                'Cleric': ['Aurelia', 'Benedict', 'Seraphina']
+            };
+            const classNames = names[charClass] || ['Unknown'];
+            return classNames[Math.floor(Math.random() * classNames.length)];
         });
 
-        // Templates showcasing function rules
+        parser.addConditionalRule('appropriate_weapon', (context) => {
+            const charClass = context.get('character_class');
+            const weapons = {
+                'Warrior': 'sword and shield',
+                'Mage': 'magical staff',
+                'Rogue': 'twin daggers',
+                'Cleric': 'blessed mace'
+            };
+            return weapons[charClass] || 'bare hands';
+        });
+
+        // 7. Template Rules - Structured combinations
+        parser.addTemplateRule('character_intro',
+            '{name} the {class} (Level {level}) wields {weapon}',
+            ['name', 'class', 'level', 'weapon']
+        );
+
+        parser.addTemplateRule('adventure_setup',
+            'In {chapter}, during the {phase} in the {location}, {character} {action} a {rarity} treasure worth {gold} gold.',
+            ['chapter', 'phase', 'location', 'character', 'action', 'rarity', 'gold']
+        );
+
+        // 8. Reference Rules - Reuse previous values
+        parser.addReferenceRule('name', 'character_name');
+        parser.addReferenceRule('class', 'character_class');
+        parser.addReferenceRule('weapon', 'appropriate_weapon');
+        parser.addReferenceRule('character', 'character_intro');
+        parser.addReferenceRule('rarity', 'item_rarity');
+
+        // Templates showcasing all rule types
         const templates = [
-            '%character% rolls %diceRoll% for initiative.',
-            '%character% %action% %goldAmount% gold pieces in the %location%.',
-            'The temperature in the %location% is %temperature%.',
-            'Random encounter at %timestamp%: strength %randomNumber%/100',
-            '%character% finds treasure worth %goldAmount% coins (rolled %diceRoll%).'
+            '🎭 Character: %character_intro%',
+            '🌍 Adventure: %adventure_setup%',
+            '⚔️ Combat: @name attacks with @weapon! (Health: %health_percent|multiply:100|round%%)',
+            '🎲 Encounter: %encounter_type% encounter at %timestamp% - Weather: %weather_condition%',
+            '📖 Story: %chapter% begins at %phase% when @character finds %item_rarity% loot!'
         ];
 
         function generateExamples() {
@@ -189,6 +254,12 @@ const result = parser.parse('%character% rolls %diceRoll% at %timestamp%');
 
                 examplesDiv.appendChild(templateDiv);
             });
+        }
+
+        function resetSequential() {
+            parser.resetSequentialRule('chapter');
+            parser.resetSequentialRule('phase');
+            alert('Sequential rules reset! Next generation will start from the beginning of sequences.');
         }
 
         function showCode() {

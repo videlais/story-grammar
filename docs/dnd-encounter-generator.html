@@ -397,26 +397,53 @@
                 'Reality bends and warps unpredictably'
             ]);
 
-            // Encounter rewards
+            // Encounter rewards with dynamic values
             parser.addRule('rewards', [
-                'a cache of ancient coins', 'a mysterious magical item', 'a scroll with forbidden knowledge',
-                'a key to a secret chamber', 'a map to hidden treasure', 'a rare gemstone',
+                'a cache of %gold_amount% ancient coins', 'a mysterious magical item', 'a scroll with forbidden knowledge',
+                'a key to a secret chamber', 'a map to hidden treasure', 'a rare gemstone worth %gem_value% gold',
                 'an ornate weapon', 'a protective talisman', 'a potion of great power',
                 'a book of forgotten lore', 'a crystal containing trapped magic', 'a crown of forgotten royalty'
             ]);
 
-            // Monster selection by difficulty
-            parser.addRule('selected_monster', [
-                '%easy_monsters%', '%easy_monsters%', '%easy_monsters%', // 3/7 chance for easy
-                '%medium_monsters%', '%medium_monsters%', // 2/7 chance for medium
-                '%hard_monsters%', // 1/7 chance for hard
-                '%deadly_monsters%' // 1/7 chance for deadly
-            ]);
+            // Add range rules for dynamic values
+            parser.addRangeRule('gold_amount', 10, 500, true); // 10-500 gold pieces
+            parser.addRangeRule('gem_value', 50, 1000, true);  // 50-1000 gold value
+            parser.addRangeRule('party_level', 1, 10, true);   // Character levels 1-10
 
-            // Main encounter template
-            parser.addRule('encounter', [
-                'In %locations%, the adventurers encounter a %selected_monster% %motivations%. %complications%. Victory might yield %rewards%.'
-            ]);
+            // Sequential rule for encounter progression
+            parser.addSequentialRule('encounter_number', ['First', 'Second', 'Third', 'Fourth', 'Fifth']);
+
+            // Use weighted rules for balanced encounter difficulty
+            parser.addWeightedRule('encounter_difficulty', 
+                ['Easy', 'Medium', 'Hard', 'Deadly'], 
+                [0.4, 0.3, 0.2, 0.1] // 40% easy, 30% medium, 20% hard, 10% deadly
+            );
+
+            // Conditional monster selection based on difficulty
+            parser.addConditionalRule('selected_monster', (context) => {
+                const difficulty = context.get('encounter_difficulty');
+                switch(difficulty) {
+                    case 'Easy': return easyMonsters[Math.floor(Math.random() * easyMonsters.length)].name;
+                    case 'Medium': return mediumMonsters[Math.floor(Math.random() * mediumMonsters.length)].name;
+                    case 'Hard': return hardMonsters[Math.floor(Math.random() * hardMonsters.length)].name;
+                    case 'Deadly': return deadlyMonsters[Math.floor(Math.random() * deadlyMonsters.length)].name;
+                    default: return easyMonsters[Math.floor(Math.random() * easyMonsters.length)].name;
+                }
+            });
+
+            // Use template rule for structured encounter generation
+            parser.addTemplateRule('encounter',
+                'In {location}, the adventurers face a {difficulty} encounter with a {monster} {motivation}. {complication} Victory might yield {reward}.',
+                ['location', 'difficulty', 'monster', 'motivation', 'complication', 'reward']
+            );
+
+            // Map template slots to existing rules
+            parser.addReferenceRule('location', 'locations');
+            parser.addReferenceRule('monster', 'selected_monster');
+            parser.addReferenceRule('motivation', 'motivations');
+            parser.addReferenceRule('complication', 'complications');
+            parser.addReferenceRule('reward', 'rewards');
+            parser.addReferenceRule('difficulty', 'encounter_difficulty');
         }
 
         // Convert challenge rating string to numeric value

@@ -206,6 +206,20 @@
         
         // Define the fantasy kingdom grammar
         function setupFantasyGrammar() {
+            // Add weighted rule for ending types (murder most common, flee least common)
+            parser.addWeightedRule('ending_type', 
+                ['murder', 'invasion', 'flee'], 
+                [0.5, 0.35, 0.15] // 50% murder, 35% invasion, 15% flee
+            );
+
+            // Add range rule for reign years
+            parser.addRangeRule('reign_years', 5, 35, true); // 5-35 years
+
+            // Add sequential rule for dynasty tracking
+            parser.addSequentialRule('dynasty_era', [
+                'First Era', 'Second Era', 'Third Era', 'Fourth Era', 'Final Era'
+            ]);
+
             // Kingdom characteristics
             parser.addRule('kingdom_names', [
                 'Valdoria', 'Aethermoor', 'Drakmonia', 'Silverhold', 'Ironspire',
@@ -252,9 +266,22 @@
                 'defended against multiple barbarian raids'
             ]);
             
-            parser.addRule('reign_years', [
-                '7', '12', '15', '23', '18', '9', '31', '14', '26', '11', '19', '8'
-            ]);
+            // Conditional events based on kingdom traits
+            parser.addConditionalRule('trait_bonus_event', (context) => {
+                const trait = context.get('kingdom_traits');
+                switch(trait) {
+                    case 'prosperous':
+                        return 'established profitable trade guilds';
+                    case 'mystical':
+                        return 'mastered ancient magical arts';
+                    case 'war-torn':
+                        return 'forged legendary weapons in the fires of conflict';
+                    case 'ancient':
+                        return 'uncovered secrets from the dawn of time';
+                    default:
+                        return 'achieved great renown throughout the land';
+                }
+            });
             
             // Murder endings
             parser.addRule('murder_methods', [
@@ -304,17 +331,28 @@
             ]);
             
             // Main story templates
-            parser.addRule('kingdom_intro', [
-                'In the %kingdom_traits% kingdom of %kingdom_names%, %ruler_titles% %ruler_names% ruled for %reign_years% years.',
-                'The realm of %kingdom_names% was governed by the %kingdom_traits% %ruler_titles% %ruler_names% for %reign_years% prosperous years.',
-                '%ruler_titles% %ruler_names% of %kingdom_names% reigned over the %kingdom_traits% lands for %reign_years% years.'
-            ]);
+            // Use template rules for structured narrative
+            parser.addTemplateRule('kingdom_intro',
+                'In the {era}, the {trait} kingdom of {kingdom} was ruled by {title} {ruler} for {years} years.',
+                ['era', 'trait', 'kingdom', 'title', 'ruler', 'years']
+            );
             
-            parser.addRule('kingdom_middle', [
-                'During this time, the ruler %reign_events% and brought great %kingdom_traits% to the realm.',
-                'The %ruler_titles% was known for having %reign_events%, making %kingdom_names% famous throughout the land.',
-                'Under %ruler_names%\'s rule, the kingdom %reign_events% and became renowned for its %kingdom_features%.'
-            ]);
+            // Reference rules for template slots
+            parser.addReferenceRule('era', 'dynasty_era');
+            parser.addReferenceRule('trait', 'kingdom_traits');
+            parser.addReferenceRule('kingdom', 'kingdom_names');
+            parser.addReferenceRule('title', 'ruler_titles');
+            parser.addReferenceRule('ruler', 'ruler_names');
+            parser.addReferenceRule('years', 'reign_years');
+            
+            parser.addTemplateRule('kingdom_middle',
+                'During this time, the ruler {event} and {bonus}. The kingdom became renowned for its {feature}.',
+                ['event', 'bonus', 'feature']
+            );
+            
+            parser.addReferenceRule('event', 'reign_events');
+            parser.addReferenceRule('bonus', 'trait_bonus_event');
+            parser.addReferenceRule('feature', 'kingdom_features');
             
             parser.addRule('murder_ending', [
                 'However, the reign came to a bloody end when %ruler_titles% %ruler_names% was %murder_methods%.',
@@ -340,9 +378,8 @@
             const intro = parser.parse('%kingdom_intro%');
             const middle = parser.parse('%kingdom_middle%');
             
-            // Randomly choose an ending type
-            const endingTypes = ['murder', 'invasion', 'flee'];
-            const endingType = endingTypes[Math.floor(Math.random() * endingTypes.length)];
+            // Use weighted rule for ending type selection
+            const endingType = parser.parse('%ending_type%');
             
             let ending;
             switch(endingType) {
