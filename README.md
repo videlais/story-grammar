@@ -369,6 +369,20 @@ Visit the `docs/` folder for interactive examples demonstrating the Story Gramma
 
 A complete interactive example that generates 12 generations of fantasy kingdoms with dramatic endings.
 
+### 🐉 D&D Encounter Generator
+
+**File:** [`docs/dnd-encounter-generator.html`](docs/dnd-encounter-generator.html)
+
+A dynamic D&D encounter generator that fetches real monster data from GitHub and creates procedural encounters. Features:
+
+- **External API Integration**: Fetches 1000+ monsters from D&D monster database
+- **Smart Categorization**: Filters monsters by Challenge Rating for balanced encounters
+- **Advanced Grammar**: Multi-variable templates with weighted probability distributions
+- **Real-time Statistics**: Tracks monster usage, encounter difficulty, and trends
+- **Professional UI**: Game-quality interface with responsive design
+
+Demonstrates complex data integration, statistical analysis, and advanced grammar usage patterns.
+
 ### Additional Examples
 
 See [`docs/README.md`](docs/README.md) for comprehensive documentation of all examples, usage patterns, and integration guides.
