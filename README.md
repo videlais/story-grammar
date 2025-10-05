@@ -983,5 +983,3 @@ interface Modifier {
   priority?: number;
 }
 ```
-
-
