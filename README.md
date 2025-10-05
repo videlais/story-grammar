@@ -22,6 +22,12 @@ This project is heavily inspired by the great work Kate Compton did and continue
     - [Complex Nested Variables](#complex-nested-variables)
     - [Function Rules](#function-rules)
     - [Weighted Rules](#weighted-rules)
+    - [Conditional Rules](#conditional-rules)
+    - [Sequential Rules](#sequential-rules)
+    - [Range Rules](#range-rules)
+    - [Template Rules](#template-rules)
+    - [Reference Rules](#reference-rules)
+    - [Seeded Randomness](#seeded-randomness)
     - [Story Generation](#story-generation)
     - [Error Handling](#error-handling)
   - [Built-in Modifiers](#built-in-modifiers)
@@ -48,16 +54,17 @@ This project is heavily inspired by the great work Kate Compton did and continue
       - [Static Rules](#static-rules)
       - [Function Rule Methods](#function-rule-methods)
       - [Weighted Rule Methods](#weighted-rule-methods)
+      - [Conditional Rule Methods](#conditional-rule-methods)
+      - [Sequential Rule Methods](#sequential-rule-methods)
+      - [Range Rule Methods](#range-rule-methods)
+      - [Template Rule Methods](#template-rule-methods)
+      - [Reference Rule Methods](#reference-rule-methods)
       - [Parsing](#parsing)
       - [Modifiers](#modifiers)
       - [Built-in Modifier Methods](#built-in-modifier-methods)
       - [Configuration](#configuration)
     - [Types](#types)
   - [Interactive Examples](#interactive-examples)
-    - [🏰 Fantasy Kingdom Generator](#-fantasy-kingdom-generator)
-    - [🎲 Function Rules Example](#-function-rules-example)
-    - [⚖️ Weighted Rules Example](#️-weighted-rules-example)
-    - [🐉 D\&D Encounter Generator](#-dd-encounter-generator)
     - [Additional Examples](#additional-examples)
 
 ## Overview
@@ -750,51 +757,21 @@ interface Modifier {
 
 Visit the `docs/` folder for interactive examples demonstrating the Story Grammar library:
 
-### 🏰 Fantasy Kingdom Generator
+- **🏰 Fantasy Kingdom Generator** - [Live Demo](https://videlais.github.io/story-grammar/fantasy-kingdom-example.html) | [Source](docs/fantasy-kingdom-example.html)
+  - Interactive generator creating 12 generations of kingdoms with dramatic endings
+  - Demonstrates weighted rules, conditional events, and sequential dynasty progression
 
-**File:** [`docs/fantasy-kingdom-example.html`](docs/fantasy-kingdom-example.html)  
-**Live Demo:** [https://videlais.github.io/story-grammar/fantasy-kingdom-example.html](https://videlais.github.io/story-grammar/fantasy-kingdom-example.html)
+- **🎲 Advanced Rules Showcase** - [Live Demo](https://videlais.github.io/story-grammar/function-rules-example.html) | [Source](docs/function-rules-example.html)
+  - Comprehensive demonstration of all 8 rule types working together
+  - Features character creation, context-aware selection, and sequential progression
 
-A complete interactive example that generates 12 generations of fantasy kingdoms with dramatic endings.
+- **⚖️ Weighted Rules Example** - [Live Demo](https://videlais.github.io/story-grammar/weighted-rules-example.html) | [Source](docs/weighted-rules-example.html)
+  - Probability-based selection with realistic distribution patterns
+  - Perfect for game loot systems and natural frequency modeling
 
-### 🎲 Function Rules Example
-
-**File:** [`docs/function-rules-example.html`](docs/function-rules-example.html)  
-**Live Demo:** [https://dancox.github.io/story-grammar/function-rules-example.html](https://dancox.github.io/story-grammar/function-rules-example.html)
-
-Demonstrates dynamic rule generation using function-based rules. Features:
-
-- **Dynamic Content**: Rules that generate different values each time
-- **Random Numbers**: Dice rolls, percentages, and random values
-- **Real-time Data**: Current timestamps and calculated values
-- **Interactive Examples**: Live demonstration of function vs static rules
-
-### ⚖️ Weighted Rules Example
-
-**File:** [`docs/weighted-rules-example.html`](docs/weighted-rules-example.html)  
-**Live Demo:** [https://dancox.github.io/story-grammar/weighted-rules-example.html](https://dancox.github.io/story-grammar/weighted-rules-example.html)
-
-Showcases probability-based rule selection with custom weights. Features:
-
-- **Realistic Distributions**: Common items appear more frequently than rare ones
-- **Statistical Verification**: 1000-sample tests verify weight accuracy
-- **Comparative Analysis**: Side-by-side weighted vs equal probability
-- **Interactive Controls**: Live weight adjustment and result generation
-
-### 🐉 D&D Encounter Generator
-
-**File:** [`docs/dnd-encounter-generator.html`](docs/dnd-encounter-generator.html)  
-**Live Demo:** [https://videlais.github.io/story-grammar/dnd-encounter-generator.html](https://videlais.github.io/story-grammar/dnd-encounter-generator.html)
-
-A dynamic D&D encounter generator that fetches real monster data from GitHub and creates procedural encounters. Features:
-
-- **External API Integration**: Fetches 1000+ monsters from D&D monster database
-- **Smart Categorization**: Filters monsters by Challenge Rating for balanced encounters
-- **Advanced Grammar**: Multi-variable templates with weighted probability distributions
-- **Real-time Statistics**: Tracks monster usage, encounter difficulty, and trends
-- **Professional UI**: Game-quality interface with responsive design
-
-Demonstrates complex data integration, statistical analysis, and advanced grammar usage patterns.
+- **🐉 D&D Encounter Generator** - [Live Demo](https://videlais.github.io/story-grammar/dnd-encounter-generator.html) | [Source](docs/dnd-encounter-generator.html)
+  - Dynamic encounter generation using real D&D monster data from external APIs
+  - Showcases template rules, conditional monster selection, and range-based rewards
 
 ### Additional Examples
 
