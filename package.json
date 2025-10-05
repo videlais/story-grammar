@@ -9,6 +9,7 @@
     "build:webpack": "webpack --config webpack.config.cjs",
     "build:webpack:dev": "webpack --config webpack.dev.config.cjs",
     "build:all": "npm run build && npm run build:webpack",
+    "build:docs": "npm run build:all && cp dist/story-grammar.bundle.js* docs/",
     "dev": "ts-node --esm src/index.ts",
     "test": "jest --collectCoverage",
     "test:watch": "jest --watch",
