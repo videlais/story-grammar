@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Backward Compatibility</title>
+</head>
+<body>
+    <div id="result"></div>
+    <script src="story-grammar.bundle.js"></script>
+    <script>
+        try {
+            console.log('StoryGrammar object:', Object.keys(StoryGrammar));
+            
+            // Test old exports
+            if (StoryGrammar.EnglishArticleModifier) {
+                console.log('✅ EnglishArticleModifier available');
+            } else {
+                console.log('❌ EnglishArticleModifier NOT available');
+            }
+            
+            if (StoryGrammar.EnglishPluralizationModifier) {
+                console.log('✅ EnglishPluralizationModifier available');
+            } else {
+                console.log('❌ EnglishPluralizationModifier NOT available');
+            }
+            
+            // Test new namespace
+            if (StoryGrammar.Modifiers) {
+                console.log('✅ Modifiers namespace available');
+                console.log('Modifiers keys:', Object.keys(StoryGrammar.Modifiers));
+                
+                if (StoryGrammar.Modifiers.English) {
+                    console.log('✅ Modifiers.English available');
+                    console.log('English modifiers:', Object.keys(StoryGrammar.Modifiers.English));
+                }
+            } else {
+                console.log('❌ Modifiers namespace NOT available');
+            }
+            
+            // Test actual usage
+            const parser = new StoryGrammar.Parser();
+            parser.loadModifier(StoryGrammar.EnglishArticleModifier);
+            parser.addRule('test', ['a elephant']);
+            const result = parser.parse('%test%');
+            console.log('Test result:', result);
+            
+            document.getElementById('result').innerHTML = `
+                <h3>Compatibility Test Results:</h3>
+                <p>Old syntax works: ${result === 'an elephant' ? '✅' : '❌'}</p>
+                <p>Generated: "${result}"</p>
+                <p>Expected: "an elephant"</p>
+            `;
+            
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('result').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        }
+    </script>
+</body>
+</html>

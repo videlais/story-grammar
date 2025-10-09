@@ -402,7 +402,8 @@
 
                 parser = new StoryGrammar.Parser();
                 
-                // Load English modifiers
+                // Load English modifiers (backward compatible syntax)
+                // NEW: You can also use StoryGrammar.Modifiers.English.ArticleModifier
                 try {
                     if (StoryGrammar.EnglishArticleModifier) {
                         parser.loadModifier(StoryGrammar.EnglishArticleModifier);
@@ -410,6 +411,8 @@
                     if (StoryGrammar.EnglishPluralizationModifier) {
                         parser.loadModifier(StoryGrammar.EnglishPluralizationModifier);
                     }
+                    // NEW: Or load all at once with:
+                    // parser.loadModifiers(StoryGrammar.Modifiers.English.AllEnglishModifiers);
                 } catch (modifierError) {
                     console.error('Error loading modifiers:', modifierError);
                 }

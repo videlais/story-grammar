@@ -8,7 +8,10 @@ export { Parser } from './Parser.js';
 // Export all types and interfaces
 export * from './types.js';
 
-// English modifiers
+// New Modifiers namespace
+export * as Modifiers from './modifiers/index.js';
+
+// English modifiers (backward compatibility)
 export {
   EnglishArticleModifier,
   EnglishPluralizationModifier,

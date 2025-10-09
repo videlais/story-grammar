@@ -727,6 +727,53 @@ parser.loadModifiers(BasicEnglishModifiers);
 // Includes: articles, pluralization, ordinals
 ```
 
+### Namespace Structure (New in v1.0.5)
+
+Story Grammar now organizes modifiers in a clean namespace structure for better organization and future multi-language support:
+
+```typescript
+import { Parser, Modifiers } from 'story-grammar';
+
+const parser = new Parser();
+
+// Import from English namespace
+parser.loadModifier(Modifiers.English.ArticleModifier);
+parser.loadModifier(Modifiers.English.PluralizationModifier);
+parser.loadModifier(Modifiers.English.CapitalizationModifier);
+
+// Or load all English modifiers at once
+parser.loadModifiers(Modifiers.English.AllEnglishModifiers);
+
+// Individual imports are also available for convenience
+parser.loadModifier(Modifiers.ArticleModifier);
+parser.loadModifiers(Modifiers.AllEnglishModifiers);
+```
+
+#### Namespace Imports
+
+```typescript
+// Import specific language namespace
+import { English } from 'story-grammar/modifiers';
+
+// Import all modifiers
+import { Modifiers } from 'story-grammar';
+
+// Future support for additional languages:
+// import { Spanish, French } from 'story-grammar/modifiers';
+```
+
+#### Available English Modifiers in Namespace
+
+- `Modifiers.English.ArticleModifier` - Handles a/an article correction
+- `Modifiers.English.PluralizationModifier` - Pluralizes nouns with quantity words
+- `Modifiers.English.OrdinalModifier` - Converts numbers to ordinals (1st, 2nd, 3rd)
+- `Modifiers.English.CapitalizationModifier` - Capitalizes sentence starts
+- `Modifiers.English.PossessiveModifier` - Handles possessive forms (John's, cats')
+- `Modifiers.English.VerbAgreementModifier` - Basic subject-verb agreement
+- `Modifiers.English.PunctuationCleanupModifier` - Cleans up spacing around punctuation
+
+**Note**: The original exports remain available for backward compatibility.
+
 ## Modifier System
 
 The Story Grammar parser includes a powerful modifier system that allows you to apply transformations to generated text after variable expansion.
