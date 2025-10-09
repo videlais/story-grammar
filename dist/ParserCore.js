@@ -2503,5 +2503,471 @@ export class Parser {
             circularReferences: uniqueCircularRefs
         };
     }
+    /**
+     * Calculate probability analysis for a specific rule
+     *
+     * This method analyzes all possible outcomes of a rule and calculates the probability
+     * of each outcome occurring. It considers weighted rules, nested variables, and
+     * rule dependencies to provide accurate probability distributions.
+     *
+     * @param ruleKey - The name of the rule to analyze
+     * @param maxDepth - Maximum recursion depth to prevent stack overflow (default: 50)
+     * @param maxOutcomes - Maximum number of outcomes to calculate (default: 1000)
+     *
+     * @returns ProbabilityAnalysis with detailed probability information
+     *
+     * @throws {Error} If the rule does not exist
+     *
+     * @example
+     * ```typescript
+     * parser.addWeightedRule('rarity', ['common', 'rare', 'legendary'], [0.7, 0.2, 0.1]);
+     * parser.addRule('items', ['sword', 'shield']);
+     * parser.addRule('loot', ['%rarity% %items%']);
+     *
+     * const analysis = parser.calculateProbabilities('loot');
+     * console.log(analysis.mostProbable[0]); // { outcome: "common sword", probability: 0.35 }
+     * console.log(analysis.entropy); // Measure of randomness/uncertainty
+     * ```
+     *
+     * @since 1.1.0
+     */
+    calculateProbabilities(ruleKey, maxDepth = 50, maxOutcomes = 1000) {
+        const warnings = [];
+        // Check if rule exists
+        if (!this.hasRule(ruleKey)) {
+            throw new Error(`Rule '${ruleKey}' does not exist`);
+        }
+        // Calculate all possible outcomes with their probabilities
+        const outcomes = this.calculateRuleProbabilities(ruleKey, new Set(), maxDepth, maxOutcomes, warnings);
+        if (outcomes.length === 0) {
+            return {
+                ruleName: ruleKey,
+                outcomes: [],
+                mostProbable: [],
+                leastProbable: [],
+                totalOutcomes: 0,
+                averageProbability: 0,
+                entropy: 0,
+                isFinite: true,
+                warnings
+            };
+        }
+        // Sort outcomes by probability
+        const sortedOutcomes = [...outcomes].sort((a, b) => b.probability - a.probability);
+        // Calculate statistics
+        const totalOutcomes = outcomes.length;
+        const averageProbability = totalOutcomes > 0 ? 1 / totalOutcomes : 0;
+        // Calculate entropy (measure of uncertainty/randomness)
+        let entropy = 0;
+        for (const outcome of outcomes) {
+            if (outcome.probability > 0) {
+                entropy -= outcome.probability * Math.log2(outcome.probability);
+            }
+        }
+        // Get top 5 most and least probable outcomes
+        const mostProbable = sortedOutcomes.slice(0, 5);
+        const leastProbable = sortedOutcomes.slice(-5).reverse();
+        const isFiniteResult = outcomes.every(o => Number.isFinite(o.probability));
+        return {
+            ruleName: ruleKey,
+            outcomes,
+            mostProbable,
+            leastProbable,
+            totalOutcomes,
+            averageProbability,
+            entropy,
+            isFinite: isFiniteResult,
+            warnings
+        };
+    }
+    /**
+     * Get the most probable outcome for a rule
+     *
+     * @param ruleKey - The name of the rule to analyze
+     * @param maxDepth - Maximum recursion depth (default: 50)
+     * @param maxOutcomes - Maximum number of outcomes to consider (default: 1000)
+     *
+     * @returns The most probable outcome, or null if no outcomes exist
+     *
+     * @example
+     * ```typescript
+     * const mostProbable = parser.getMostProbableOutcome('loot');
+     * console.log(`Most likely: ${mostProbable.outcome} (${(mostProbable.probability * 100).toFixed(1)}%)`);
+     * ```
+     *
+     * @since 1.1.0
+     */
+    getMostProbableOutcome(ruleKey, maxDepth = 50, maxOutcomes = 1000) {
+        const analysis = this.calculateProbabilities(ruleKey, maxDepth, maxOutcomes);
+        return analysis.mostProbable.length > 0 ? analysis.mostProbable[0] : null;
+    }
+    /**
+     * Get the least probable outcome for a rule
+     *
+     * @param ruleKey - The name of the rule to analyze
+     * @param maxDepth - Maximum recursion depth (default: 50)
+     * @param maxOutcomes - Maximum number of outcomes to consider (default: 1000)
+     *
+     * @returns The least probable outcome, or null if no outcomes exist
+     *
+     * @example
+     * ```typescript
+     * const leastProbable = parser.getLeastProbableOutcome('loot');
+     * console.log(`Rarest: ${leastProbable.outcome} (${(leastProbable.probability * 100).toFixed(3)}%)`);
+     * ```
+     *
+     * @since 1.1.0
+     */
+    getLeastProbableOutcome(ruleKey, maxDepth = 50, maxOutcomes = 1000) {
+        const analysis = this.calculateProbabilities(ruleKey, maxDepth, maxOutcomes);
+        return analysis.leastProbable.length > 0 ? analysis.leastProbable[0] : null;
+    }
+    /**
+     * Calculate probabilities for a specific rule (recursive helper)
+     * @private
+     */
+    calculateRuleProbabilities(ruleKey, visited, maxDepth, maxOutcomes, warnings) {
+        // Check for circular references
+        if (visited.has(ruleKey)) {
+            warnings.push(`Circular reference detected for rule '${ruleKey}'`);
+            return [{
+                    outcome: `[circular:${ruleKey}]`,
+                    probability: 1.0,
+                    probabilityTree: [],
+                    variables: []
+                }];
+        }
+        // Check maximum depth
+        if (visited.size >= maxDepth) {
+            warnings.push(`Maximum depth (${maxDepth}) reached while analyzing '${ruleKey}'`);
+            return [{
+                    outcome: `[max-depth:${ruleKey}]`,
+                    probability: 1.0,
+                    probabilityTree: [],
+                    variables: []
+                }];
+        }
+        const newVisited = new Set(visited);
+        newVisited.add(ruleKey);
+        // Handle different rule types
+        if (ruleKey in this.grammar) {
+            return this.calculateStaticRuleProbabilities(ruleKey, newVisited, maxDepth, maxOutcomes, warnings);
+        }
+        else if (this.weightedRules.has(ruleKey)) {
+            return this.calculateWeightedRuleProbabilities(ruleKey, newVisited, maxDepth, maxOutcomes, warnings);
+        }
+        else if (this.rangeRules.has(ruleKey)) {
+            return this.calculateRangeRuleProbabilities(ruleKey);
+        }
+        else if (this.templateRules.has(ruleKey)) {
+            return this.calculateTemplateRuleProbabilities(ruleKey, newVisited, maxDepth, maxOutcomes, warnings);
+        }
+        else if (this.sequentialRules.has(ruleKey)) {
+            return this.calculateSequentialRuleProbabilities(ruleKey, newVisited, maxDepth, maxOutcomes, warnings);
+        }
+        else if (this.conditionalRules.has(ruleKey)) {
+            return this.calculateConditionalRuleProbabilities(ruleKey, newVisited, maxDepth, maxOutcomes, warnings);
+        }
+        else if (this.functionRules.has(ruleKey)) {
+            warnings.push(`Function rule '${ruleKey}' has dynamic outcomes - cannot calculate exact probabilities`);
+            return [{
+                    outcome: `[function:${ruleKey}]`,
+                    probability: 1.0,
+                    probabilityTree: [],
+                    variables: []
+                }];
+        }
+        return [];
+    }
+    /**
+     * Calculate probabilities for static rules
+     * @private
+     */
+    calculateStaticRuleProbabilities(ruleKey, visited, maxDepth, maxOutcomes, warnings) {
+        const values = this.grammar[ruleKey];
+        const results = [];
+        const baseProb = 1.0 / values.length; // Equal probability for each value
+        for (const value of values) {
+            const variables = this.findVariables(value);
+            if (variables.length === 0) {
+                // Literal string
+                results.push({
+                    outcome: value,
+                    probability: baseProb,
+                    probabilityTree: [{
+                            ruleName: ruleKey,
+                            value: value,
+                            probability: baseProb,
+                            children: []
+                        }],
+                    variables: []
+                });
+            }
+            else {
+                // Has variables - need to expand them
+                const expandedResults = this.expandVariablesWithProbabilities(value, variables, baseProb, visited, maxDepth, maxOutcomes, warnings);
+                results.push(...expandedResults);
+            }
+            // Prevent excessive outcomes
+            if (results.length >= maxOutcomes) {
+                warnings.push(`Maximum outcomes (${maxOutcomes}) reached for rule '${ruleKey}'`);
+                break;
+            }
+        }
+        return results;
+    }
+    /**
+     * Calculate probabilities for weighted rules
+     * @private
+     */
+    calculateWeightedRuleProbabilities(ruleKey, visited, maxDepth, maxOutcomes, warnings) {
+        const rule = this.weightedRules.get(ruleKey);
+        const results = [];
+        for (let i = 0; i < rule.values.length; i++) {
+            const value = rule.values[i];
+            const probability = rule.weights[i];
+            const variables = this.findVariables(value);
+            if (variables.length === 0) {
+                // Literal string
+                results.push({
+                    outcome: value,
+                    probability: probability,
+                    probabilityTree: [{
+                            ruleName: ruleKey,
+                            value: value,
+                            probability: probability,
+                            children: []
+                        }],
+                    variables: []
+                });
+            }
+            else {
+                // Has variables - need to expand them
+                const expandedResults = this.expandVariablesWithProbabilities(value, variables, probability, visited, maxDepth, maxOutcomes, warnings);
+                results.push(...expandedResults);
+            }
+            if (results.length >= maxOutcomes) {
+                warnings.push(`Maximum outcomes (${maxOutcomes}) reached for rule '${ruleKey}'`);
+                break;
+            }
+        }
+        return results;
+    }
+    /**
+     * Calculate probabilities for range rules
+     * @private
+     */
+    calculateRangeRuleProbabilities(ruleKey) {
+        const rule = this.rangeRules.get(ruleKey);
+        const step = rule.step || 1;
+        const numValues = Math.floor((rule.max - rule.min) / step) + 1;
+        const probability = 1.0 / numValues;
+        const results = [];
+        for (let i = 0; i < numValues; i++) {
+            const value = rule.min + (i * step);
+            const valueStr = rule.type === 'integer' ? value.toString() : value.toFixed(1);
+            results.push({
+                outcome: valueStr,
+                probability: probability,
+                probabilityTree: [{
+                        ruleName: ruleKey,
+                        value: valueStr,
+                        probability: probability,
+                        children: []
+                    }],
+                variables: []
+            });
+        }
+        return results;
+    }
+    /**
+     * Calculate probabilities for template rules
+     * @private
+     */
+    calculateTemplateRuleProbabilities(ruleKey, visited, maxDepth, maxOutcomes, warnings) {
+        const rule = this.templateRules.get(ruleKey);
+        const templateVariables = this.findVariables(rule.template);
+        // Calculate all combinations of template variables
+        const variableCombinations = this.calculateTemplateCombinations(rule, templateVariables, warnings);
+        const results = [];
+        for (const combination of variableCombinations) {
+            let outcome = rule.template;
+            const probabilityTree = [];
+            let totalProbability = combination.probability;
+            // Replace variables in template
+            for (const variable of templateVariables) {
+                outcome = outcome.replace(new RegExp(`%${variable}%`, 'g'), combination.values[variable]);
+                probabilityTree.push({
+                    ruleName: `${ruleKey}.${variable}`,
+                    value: combination.values[variable],
+                    probability: combination.variableProbabilities[variable],
+                    children: []
+                });
+            }
+            results.push({
+                outcome,
+                probability: totalProbability,
+                probabilityTree,
+                variables: templateVariables
+            });
+            if (results.length >= maxOutcomes) {
+                warnings.push(`Maximum outcomes (${maxOutcomes}) reached for template rule '${ruleKey}'`);
+                break;
+            }
+        }
+        return results;
+    }
+    /**
+     * Calculate probabilities for sequential rules
+     * @private
+     */
+    calculateSequentialRuleProbabilities(ruleKey, visited, maxDepth, maxOutcomes, warnings) {
+        const rule = this.sequentialRules.get(ruleKey);
+        const results = [];
+        const baseProb = 1.0 / rule.values.length; // Equal probability for sequential rules
+        for (const value of rule.values) {
+            const variables = this.findVariables(value);
+            if (variables.length === 0) {
+                results.push({
+                    outcome: value,
+                    probability: baseProb,
+                    probabilityTree: [{
+                            ruleName: ruleKey,
+                            value: value,
+                            probability: baseProb,
+                            children: []
+                        }],
+                    variables: []
+                });
+            }
+            else {
+                const expandedResults = this.expandVariablesWithProbabilities(value, variables, baseProb, visited, maxDepth, maxOutcomes, warnings);
+                results.push(...expandedResults);
+            }
+            if (results.length >= maxOutcomes) {
+                warnings.push(`Maximum outcomes (${maxOutcomes}) reached for rule '${ruleKey}'`);
+                break;
+            }
+        }
+        return results;
+    }
+    /**
+     * Calculate probabilities for conditional rules
+     * @private
+     */
+    calculateConditionalRuleProbabilities(ruleKey, visited, maxDepth, maxOutcomes, warnings) {
+        const rule = this.conditionalRules.get(ruleKey);
+        const results = [];
+        // For conditional rules, we assume equal probability for each condition
+        // In a real implementation, this might need context or probability weights
+        const conditionProb = 1.0 / rule.conditions.length;
+        for (const condition of rule.conditions) {
+            const values = condition.then || condition.default || [];
+            const valueProb = values.length > 0 ? conditionProb / values.length : 0;
+            for (const value of values) {
+                const variables = this.findVariables(value);
+                if (variables.length === 0) {
+                    results.push({
+                        outcome: value,
+                        probability: valueProb,
+                        probabilityTree: [{
+                                ruleName: ruleKey,
+                                value: value,
+                                probability: valueProb,
+                                children: []
+                            }],
+                        variables: []
+                    });
+                }
+                else {
+                    const expandedResults = this.expandVariablesWithProbabilities(value, variables, valueProb, visited, maxDepth, maxOutcomes, warnings);
+                    results.push(...expandedResults);
+                }
+                if (results.length >= maxOutcomes) {
+                    warnings.push(`Maximum outcomes (${maxOutcomes}) reached for rule '${ruleKey}'`);
+                    break;
+                }
+            }
+        }
+        return results;
+    }
+    /**
+     * Expand variables in a value with probability calculations
+     * @private
+     */
+    expandVariablesWithProbabilities(value, variables, baseProbability, visited, maxDepth, maxOutcomes, warnings) {
+        if (variables.length === 0) {
+            return [{
+                    outcome: value,
+                    probability: baseProbability,
+                    probabilityTree: [],
+                    variables: []
+                }];
+        }
+        // Get all possible combinations for the first variable
+        const firstVar = variables[0];
+        const remainingVars = variables.slice(1);
+        if (!this.hasRule(firstVar)) {
+            warnings.push(`Missing rule '${firstVar}' referenced in expansion`);
+            return [{
+                    outcome: value.replace(new RegExp(`%${firstVar}%`, 'g'), `[missing:${firstVar}]`),
+                    probability: baseProbability,
+                    probabilityTree: [],
+                    variables: remainingVars
+                }];
+        }
+        const varResults = this.calculateRuleProbabilities(firstVar, visited, maxDepth, maxOutcomes, warnings);
+        const results = [];
+        for (const varResult of varResults) {
+            // Replace this variable in the value
+            const newValue = value.replace(new RegExp(`%${firstVar}%`, 'g'), varResult.outcome);
+            const newProbability = baseProbability * varResult.probability;
+            // Recursively handle remaining variables
+            const expandedResults = this.expandVariablesWithProbabilities(newValue, remainingVars, newProbability, visited, maxDepth, maxOutcomes, warnings);
+            for (const expanded of expandedResults) {
+                results.push({
+                    outcome: expanded.outcome,
+                    probability: expanded.probability,
+                    probabilityTree: [...varResult.probabilityTree, ...expanded.probabilityTree],
+                    variables: [firstVar, ...expanded.variables]
+                });
+            }
+            if (results.length >= maxOutcomes) {
+                warnings.push(`Maximum outcomes (${maxOutcomes}) reached during variable expansion`);
+                break;
+            }
+        }
+        return results;
+    }
+    /**
+     * Calculate all combinations for template variables
+     * @private
+     */
+    calculateTemplateCombinations(rule, variables, warnings) {
+        const combinations = [];
+        // Calculate combinations recursively
+        const generateCombinations = (varIndex, currentValues, currentProb, currentVarProbs) => {
+            if (varIndex >= variables.length) {
+                combinations.push({
+                    values: { ...currentValues },
+                    probability: currentProb,
+                    variableProbabilities: { ...currentVarProbs }
+                });
+                return;
+            }
+            const variable = variables[varIndex];
+            const possibleValues = rule.variables[variable];
+            if (!possibleValues) {
+                warnings.push(`Template variable '${variable}' not found in template rule`);
+                return;
+            }
+            const valueProb = 1.0 / possibleValues.length;
+            for (const value of possibleValues) {
+                generateCombinations(varIndex + 1, { ...currentValues, [variable]: value }, currentProb * valueProb, { ...currentVarProbs, [variable]: valueProb });
+            }
+        };
+        generateCombinations(0, {}, 1.0, {});
+        return combinations;
+    }
 }
 //# sourceMappingURL=ParserCore.js.map

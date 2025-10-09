@@ -18,6 +18,7 @@ This project is heavily inspired by the great work Kate Compton did and continue
     - [Key Features](#key-features)
   - [Features](#features)
   - [Quick Start](#quick-start)
+  - [TypeScript Usage](#typescript-usage)
   - [Examples](#examples)
     - [Basic Usage](#basic-usage)
     - [Complex Nested Variables](#complex-nested-variables)
@@ -32,6 +33,7 @@ This project is heavily inspired by the great work Kate Compton did and continue
     - [Story Generation](#story-generation)
     - [Error Handling](#error-handling)
     - [Complexity Analysis](#complexity-analysis)
+    - [Probability Analysis](#probability-analysis)
   - [Built-in Modifiers](#built-in-modifiers)
     - [Loading Individual Modifiers](#loading-individual-modifiers)
     - [Loading All English Modifiers](#loading-all-english-modifiers)
@@ -112,6 +114,7 @@ The Story Grammar Parser allows you to create complex, dynamic text generation s
 - **Circular Reference Detection**: Automatic validation to prevent infinite loops
 - **TypeScript Support**: Full type definitions included
 - **Complexity Analysis**: Calculate the generative potential of rule collections
+- **Probability Analysis**: Determine the likelihood of different outcomes
 - **Zero Dependencies**: Pure TypeScript implementation
 
 ## Quick Start
@@ -557,6 +560,112 @@ if (analysis.warnings.length > 0) {
 }
 if (analysis.circularReferences.length > 0) {
   console.log('Circular references found:', analysis.circularReferences);
+}
+```
+
+### Probability Analysis
+
+Analyze the probability distribution of your grammar rules to understand outcome likelihood:
+
+```typescript
+// Basic probability analysis
+parser.addWeightedRule('rarity', ['common', 'rare', 'legendary'], [0.7, 0.2, 0.1]);
+parser.addRule('items', ['sword', 'shield']);
+parser.addRule('loot', ['%rarity% %items%']);
+
+// Calculate probability distribution for a rule
+const analysis = parser.calculateProbabilities('loot');
+console.log(`Total possible outcomes: ${analysis.totalOutcomes}`); // 6
+console.log(`Entropy (randomness): ${analysis.entropy.toFixed(2)}`); // Measure of uncertainty
+
+// Most probable outcomes
+console.log('Most likely outcomes:');
+analysis.mostProbable.forEach(outcome => {
+  console.log(`${outcome.outcome}: ${(outcome.probability * 100).toFixed(1)}%`);
+});
+// Output:
+// common sword: 35.0%
+// common shield: 35.0%
+// rare sword: 10.0%
+// rare shield: 10.0%
+// legendary sword: 5.0%
+
+// Least probable outcomes
+console.log('Rarest outcomes:');
+analysis.leastProbable.forEach(outcome => {
+  console.log(`${outcome.outcome}: ${(outcome.probability * 100).toFixed(1)}%`);
+});
+```
+
+**Quick Access Methods:**
+
+```typescript
+// Get single most/least probable outcomes
+const mostProbable = parser.getMostProbableOutcome('loot');
+console.log(`Most likely: ${mostProbable.outcome} (${(mostProbable.probability * 100).toFixed(1)}%)`);
+
+const leastProbable = parser.getLeastProbableOutcome('loot');
+console.log(`Rarest: ${leastProbable.outcome} (${(leastProbable.probability * 100).toFixed(1)}%)`);
+```
+
+**Probability Features:**
+
+- **Weighted Rule Analysis**: Respects probability weights from weighted rules
+- **Nested Probability Calculation**: Handles complex nested variable dependencies
+- **Entropy Calculation**: Measures the randomness/uncertainty of outcomes
+- **Probability Trees**: Shows the probability chain for complex expansions
+- **Multiple Rule Type Support**: Works with all rule types (static, weighted, range, template, etc.)
+
+**Rule Type Probabilities:**
+
+- **Static Rules**: Equal probability (1/n) for each value
+- **Weighted Rules**: Uses specified probability weights
+- **Range Rules**: Uniform distribution across the range
+- **Template Rules**: Product of component variable probabilities
+- **Conditional Rules**: Assumes equal probability for each condition
+- **Function Rules**: Marked as dynamic (cannot calculate exact probabilities)
+
+**Advanced Probability Analysis:**
+
+```typescript
+// Complex nested probability analysis
+parser.addRule('adjectives', ['big', 'small']);
+parser.addWeightedRule('colors', ['red', 'blue'], [0.7, 0.3]);
+parser.addRule('objects', ['%adjectives% %colors% box']);
+
+const objectAnalysis = parser.calculateProbabilities('objects');
+
+// Check specific outcome probabilities
+const bigRedBox = objectAnalysis.outcomes.find(o => o.outcome === 'big red box');
+console.log(`Big red box probability: ${(bigRedBox.probability * 100).toFixed(1)}%`); // 35.0%
+
+// Analyze probability distribution
+if (objectAnalysis.entropy > 1.5) {
+  console.log('High randomness - outcomes are fairly distributed');
+} else {
+  console.log('Low randomness - some outcomes are much more likely');
+}
+
+// Examine probability trees for complex rules
+objectAnalysis.outcomes.forEach(outcome => {
+  console.log(`${outcome.outcome}:`);
+  outcome.probabilityTree.forEach(node => {
+    console.log(`  ${node.ruleName}: ${node.value} (${node.probability})`);
+  });
+});
+```
+
+**Performance Considerations:**
+
+```typescript
+// Control analysis scope for large grammars
+const limitedAnalysis = parser.calculateProbabilities('complexRule', 
+  50,    // maxDepth: prevent deep recursion
+  1000   // maxOutcomes: limit total outcomes calculated
+);
+
+if (limitedAnalysis.warnings.length > 0) {
+  console.log('Analysis warnings:', limitedAnalysis.warnings);
 }
 ```
 

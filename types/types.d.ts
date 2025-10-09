@@ -145,4 +145,27 @@ export interface TotalComplexityResult {
     warnings: string[];
     circularReferences: string[];
 }
+export interface ProbabilityNode {
+    ruleName: string;
+    value: string;
+    probability: number;
+    children: ProbabilityNode[];
+}
+export interface ProbabilityResult {
+    outcome: string;
+    probability: number;
+    probabilityTree: ProbabilityNode[];
+    variables: string[];
+}
+export interface ProbabilityAnalysis {
+    ruleName: string;
+    outcomes: ProbabilityResult[];
+    mostProbable: ProbabilityResult[];
+    leastProbable: ProbabilityResult[];
+    totalOutcomes: number;
+    averageProbability: number;
+    entropy: number;
+    isFinite: boolean;
+    warnings: string[];
+}
 //# sourceMappingURL=types.d.ts.map

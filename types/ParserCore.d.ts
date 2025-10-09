@@ -49,7 +49,7 @@
  * @since 1.0.0
  * @author Story Grammar Parser Team
  */
-import { Grammar, Modifier, FunctionRule, ConditionalRule, TemplateRule, ParseOptions, ParseResult, ValidationResult, ParseTimingResult, ParserStats, ParserConfig, OptimizationReport, RuleAnalysis, ErrorContext, ComplexityResult, TotalComplexityResult } from './types.js';
+import { Grammar, Modifier, FunctionRule, ConditionalRule, TemplateRule, ParseOptions, ParseResult, ValidationResult, ParseTimingResult, ParserStats, ParserConfig, OptimizationReport, RuleAnalysis, ErrorContext, ComplexityResult, TotalComplexityResult, ProbabilityResult, ProbabilityAnalysis } from './types.js';
 export declare class Parser {
     /** Core static grammar rules mapping rule names to arrays of possible values */
     private grammar;
@@ -1317,5 +1317,115 @@ export declare class Parser {
      * @since 1.1.0
      */
     calculateTotalComplexity(maxDepth?: number): TotalComplexityResult;
+    /**
+     * Calculate probability analysis for a specific rule
+     *
+     * This method analyzes all possible outcomes of a rule and calculates the probability
+     * of each outcome occurring. It considers weighted rules, nested variables, and
+     * rule dependencies to provide accurate probability distributions.
+     *
+     * @param ruleKey - The name of the rule to analyze
+     * @param maxDepth - Maximum recursion depth to prevent stack overflow (default: 50)
+     * @param maxOutcomes - Maximum number of outcomes to calculate (default: 1000)
+     *
+     * @returns ProbabilityAnalysis with detailed probability information
+     *
+     * @throws {Error} If the rule does not exist
+     *
+     * @example
+     * ```typescript
+     * parser.addWeightedRule('rarity', ['common', 'rare', 'legendary'], [0.7, 0.2, 0.1]);
+     * parser.addRule('items', ['sword', 'shield']);
+     * parser.addRule('loot', ['%rarity% %items%']);
+     *
+     * const analysis = parser.calculateProbabilities('loot');
+     * console.log(analysis.mostProbable[0]); // { outcome: "common sword", probability: 0.35 }
+     * console.log(analysis.entropy); // Measure of randomness/uncertainty
+     * ```
+     *
+     * @since 1.1.0
+     */
+    calculateProbabilities(ruleKey: string, maxDepth?: number, maxOutcomes?: number): ProbabilityAnalysis;
+    /**
+     * Get the most probable outcome for a rule
+     *
+     * @param ruleKey - The name of the rule to analyze
+     * @param maxDepth - Maximum recursion depth (default: 50)
+     * @param maxOutcomes - Maximum number of outcomes to consider (default: 1000)
+     *
+     * @returns The most probable outcome, or null if no outcomes exist
+     *
+     * @example
+     * ```typescript
+     * const mostProbable = parser.getMostProbableOutcome('loot');
+     * console.log(`Most likely: ${mostProbable.outcome} (${(mostProbable.probability * 100).toFixed(1)}%)`);
+     * ```
+     *
+     * @since 1.1.0
+     */
+    getMostProbableOutcome(ruleKey: string, maxDepth?: number, maxOutcomes?: number): ProbabilityResult | null;
+    /**
+     * Get the least probable outcome for a rule
+     *
+     * @param ruleKey - The name of the rule to analyze
+     * @param maxDepth - Maximum recursion depth (default: 50)
+     * @param maxOutcomes - Maximum number of outcomes to consider (default: 1000)
+     *
+     * @returns The least probable outcome, or null if no outcomes exist
+     *
+     * @example
+     * ```typescript
+     * const leastProbable = parser.getLeastProbableOutcome('loot');
+     * console.log(`Rarest: ${leastProbable.outcome} (${(leastProbable.probability * 100).toFixed(3)}%)`);
+     * ```
+     *
+     * @since 1.1.0
+     */
+    getLeastProbableOutcome(ruleKey: string, maxDepth?: number, maxOutcomes?: number): ProbabilityResult | null;
+    /**
+     * Calculate probabilities for a specific rule (recursive helper)
+     * @private
+     */
+    private calculateRuleProbabilities;
+    /**
+     * Calculate probabilities for static rules
+     * @private
+     */
+    private calculateStaticRuleProbabilities;
+    /**
+     * Calculate probabilities for weighted rules
+     * @private
+     */
+    private calculateWeightedRuleProbabilities;
+    /**
+     * Calculate probabilities for range rules
+     * @private
+     */
+    private calculateRangeRuleProbabilities;
+    /**
+     * Calculate probabilities for template rules
+     * @private
+     */
+    private calculateTemplateRuleProbabilities;
+    /**
+     * Calculate probabilities for sequential rules
+     * @private
+     */
+    private calculateSequentialRuleProbabilities;
+    /**
+     * Calculate probabilities for conditional rules
+     * @private
+     */
+    private calculateConditionalRuleProbabilities;
+    /**
+     * Expand variables in a value with probability calculations
+     * @private
+     */
+    private expandVariablesWithProbabilities;
+    /**
+     * Calculate all combinations for template variables
+     * @private
+     */
+    private calculateTemplateCombinations;
 }
 //# sourceMappingURL=ParserCore.d.ts.map
