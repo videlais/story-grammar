@@ -139,3 +139,24 @@ export interface ErrorContext {
   text?: string;
   ruleName?: string;
 }
+
+export interface ComplexityResult {
+  ruleName: string;
+  complexity: number;
+  ruleType: string;
+  isFinite: boolean;
+  variables: string[];
+  depth: number;
+  warnings: string[];
+}
+
+export interface TotalComplexityResult {
+  totalComplexity: number;
+  isFinite: boolean;
+  ruleCount: number;
+  complexityByRule: ComplexityResult[];
+  averageComplexity: number;
+  mostComplexRules: ComplexityResult[];
+  warnings: string[];
+  circularReferences: string[];
+}

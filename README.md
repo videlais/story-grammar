@@ -31,6 +31,7 @@ This project is heavily inspired by the great work Kate Compton did and continue
     - [Seeded Randomness](#seeded-randomness)
     - [Story Generation](#story-generation)
     - [Error Handling](#error-handling)
+    - [Complexity Analysis](#complexity-analysis)
   - [Built-in Modifiers](#built-in-modifiers)
     - [Loading Individual Modifiers](#loading-individual-modifiers)
     - [Loading All English Modifiers](#loading-all-english-modifiers)
@@ -110,6 +111,7 @@ The Story Grammar Parser allows you to create complex, dynamic text generation s
 - **Modifier System**: Apply text transformations during generation
 - **Circular Reference Detection**: Automatic validation to prevent infinite loops
 - **TypeScript Support**: Full type definitions included
+- **Complexity Analysis**: Calculate the generative potential of rule collections
 - **Zero Dependencies**: Pure TypeScript implementation
 
 ## Quick Start
@@ -488,6 +490,73 @@ const validation = parser.validate();
 if (!validation.isValid) {
   console.log('Missing rules:', validation.missingRules);
   console.log('Circular references:', validation.circularReferences);
+}
+```
+
+### Complexity Analysis
+
+Analyze the generative potential of your grammar rules:
+
+```typescript
+// Simple complexity calculation
+parser.addRule('colors', ['red', 'blue', 'green']);
+parser.addRule('animals', ['cat', 'dog']);
+parser.addRule('description', ['The %colors% %animals%']);
+
+// Calculate complexity for a specific rule
+const ruleComplexity = parser.calculateRuleComplexity('description');
+console.log(ruleComplexity.complexity); // 6 (3 colors × 2 animals)
+console.log(ruleComplexity.variables); // ['colors', 'animals']
+console.log(ruleComplexity.ruleType); // 'static'
+
+// Calculate total complexity across all rules
+const totalComplexity = parser.calculateTotalComplexity();
+console.log(totalComplexity.totalComplexity); // 11 (3 + 2 + 6)
+console.log(totalComplexity.averageComplexity); // 3.67
+console.log(totalComplexity.mostComplexRules[0].ruleName); // 'description'
+```
+
+**Complexity Features:**
+
+- **Individual Rule Analysis**: Calculate how many possible outcomes a single rule can produce
+- **Total Grammar Analysis**: Get comprehensive statistics about your entire grammar
+- **Circular Reference Detection**: Identifies and handles circular dependencies gracefully
+- **Infinite Complexity Detection**: Detects function rules and other infinite-complexity scenarios
+- **Detailed Warnings**: Provides insights about missing rules, depth limits, and potential issues
+
+**Rule Type Complexities:**
+
+- **Static Rules**: Sum of all value possibilities (accounting for nested variables)
+- **Weighted Rules**: Same as static (weights don't affect possibility count)
+- **Range Rules**: `(max - min) / step + 1` possible values
+- **Template Rules**: Product of all template variable possibilities
+- **Sequential Rules**: Number of values in the sequence
+- **Conditional Rules**: Sum of possibilities across all conditions
+- **Function Rules**: Marked as infinite complexity
+
+```typescript
+// Complex nested example
+parser.addRule('adjectives', ['big', 'small']);
+parser.addRule('materials', ['wooden', 'metal', 'glass']);
+parser.addRule('objects', ['%adjectives% %materials% box']);
+parser.addRangeRule('quantity', { min: 1, max: 5, type: 'integer' });
+parser.addTemplateRule('inventory', {
+  template: '%quantity% %objects%',
+  variables: {
+    // uses external rules for objects and quantity
+  }
+});
+
+const analysis = parser.calculateTotalComplexity();
+console.log(`Total possible combinations: ${analysis.totalComplexity}`);
+// Outputs combinations across all interconnected rules
+
+// Detect potential issues
+if (analysis.warnings.length > 0) {
+  console.log('Warnings:', analysis.warnings);
+}
+if (analysis.circularReferences.length > 0) {
+  console.log('Circular references found:', analysis.circularReferences);
 }
 ```
 

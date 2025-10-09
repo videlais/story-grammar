@@ -49,7 +49,7 @@
  * @since 1.0.0
  * @author Story Grammar Parser Team
  */
-import { Grammar, Modifier, FunctionRule, ConditionalRule, TemplateRule, ParseOptions, ParseResult, ValidationResult, ParseTimingResult, ParserStats, ParserConfig, OptimizationReport, RuleAnalysis, ErrorContext } from './types.js';
+import { Grammar, Modifier, FunctionRule, ConditionalRule, TemplateRule, ParseOptions, ParseResult, ValidationResult, ParseTimingResult, ParserStats, ParserConfig, OptimizationReport, RuleAnalysis, ErrorContext, ComplexityResult, TotalComplexityResult } from './types.js';
 export declare class Parser {
     /** Core static grammar rules mapping rule names to arrays of possible values */
     private grammar;
@@ -1233,5 +1233,89 @@ export declare class Parser {
      * @since 1.0.0
      */
     getHelpfulError(error: Error, context?: ErrorContext): string;
+    /**
+     * Calculate the complexity (number of possible outcomes) for a specific rule
+     *
+     * This method analyzes a single rule and calculates how many different possible
+     * values it can generate, taking into account nested variables and rule dependencies.
+     *
+     * @param ruleKey - The name of the rule to analyze
+     * @param visited - Internal set to track visited rules (prevents infinite recursion)
+     * @param maxDepth - Maximum recursion depth to prevent stack overflow (default: 50)
+     *
+     * @returns ComplexityResult containing detailed analysis of the rule's complexity
+     *
+     * @throws {Error} If the rule does not exist
+     *
+     * @example
+     * ```typescript
+     * parser.addRule('colors', ['red', 'blue', 'green']);
+     * parser.addRule('animals', ['cat', 'dog']);
+     * parser.addRule('description', ['The %colors% %animals%']);
+     *
+     * const result = parser.calculateRuleComplexity('description');
+     * console.log(result.complexity); // 6 (3 colors × 2 animals)
+     * console.log(result.variables); // ['colors', 'animals']
+     * ```
+     *
+     * @since 1.1.0
+     */
+    calculateRuleComplexity(ruleKey: string, visited?: Set<string>, maxDepth?: number): ComplexityResult;
+    /**
+     * Calculate complexity for static grammar rules
+     * @private
+     */
+    private calculateStaticRuleComplexity;
+    /**
+     * Calculate complexity for weighted rules
+     * @private
+     */
+    private calculateWeightedRuleComplexity;
+    /**
+     * Calculate complexity for conditional rules
+     * @private
+     */
+    private calculateConditionalRuleComplexity;
+    /**
+     * Calculate complexity for sequential rules
+     * @private
+     */
+    private calculateSequentialRuleComplexity;
+    /**
+     * Calculate complexity for range rules
+     * @private
+     */
+    private calculateRangeRuleComplexity;
+    /**
+     * Calculate complexity for template rules
+     * @private
+     */
+    private calculateTemplateRuleComplexity;
+    /**
+     * Calculate total complexity across all rules in the grammar
+     *
+     * This method analyzes the entire grammar and calculates the total complexity
+     * by examining all defined rules and their interconnections. It provides
+     * comprehensive statistics about the generative potential of the grammar.
+     *
+     * @param maxDepth - Maximum recursion depth to prevent stack overflow (default: 50)
+     *
+     * @returns TotalComplexityResult with detailed analysis of the entire grammar
+     *
+     * @example
+     * ```typescript
+     * parser.addRule('colors', ['red', 'blue']);
+     * parser.addRule('animals', ['cat', 'dog', 'bird']);
+     * parser.addRule('description', ['%colors% %animals%']);
+     *
+     * const result = parser.calculateTotalComplexity();
+     * console.log(result.totalComplexity); // Sum of all rule complexities
+     * console.log(result.mostComplexRules); // Rules with highest complexity
+     * console.log(result.averageComplexity); // Average complexity per rule
+     * ```
+     *
+     * @since 1.1.0
+     */
+    calculateTotalComplexity(maxDepth?: number): TotalComplexityResult;
 }
 //# sourceMappingURL=ParserCore.d.ts.map

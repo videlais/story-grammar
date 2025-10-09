@@ -68,7 +68,9 @@ import {
   ParserConfig,
   OptimizationReport,
   RuleAnalysis,
-  ErrorContext
+  ErrorContext,
+  ComplexityResult,
+  TotalComplexityResult
 } from './types.js';
 
 export class Parser {
@@ -2276,5 +2278,462 @@ export class Parser {
     }
     
     return helpfulMessage;
+  }
+
+  /**
+   * Calculate the complexity (number of possible outcomes) for a specific rule
+   * 
+   * This method analyzes a single rule and calculates how many different possible
+   * values it can generate, taking into account nested variables and rule dependencies.
+   * 
+   * @param ruleKey - The name of the rule to analyze
+   * @param visited - Internal set to track visited rules (prevents infinite recursion)
+   * @param maxDepth - Maximum recursion depth to prevent stack overflow (default: 50)
+   * 
+   * @returns ComplexityResult containing detailed analysis of the rule's complexity
+   * 
+   * @throws {Error} If the rule does not exist
+   * 
+   * @example
+   * ```typescript
+   * parser.addRule('colors', ['red', 'blue', 'green']);
+   * parser.addRule('animals', ['cat', 'dog']);
+   * parser.addRule('description', ['The %colors% %animals%']);
+   * 
+   * const result = parser.calculateRuleComplexity('description');
+   * console.log(result.complexity); // 6 (3 colors × 2 animals)
+   * console.log(result.variables); // ['colors', 'animals']
+   * ```
+   * 
+   * @since 1.1.0
+   */
+  public calculateRuleComplexity(ruleKey: string, visited: Set<string> = new Set(), maxDepth: number = 50): ComplexityResult {
+    const warnings: string[] = [];
+    const variables: Set<string> = new Set();
+    let ruleType = 'unknown';
+    let complexity = 1;
+    let isFinite = true;
+    
+    // Check if rule exists
+    if (!this.hasRule(ruleKey)) {
+      throw new Error(`Rule '${ruleKey}' does not exist`);
+    }
+    
+    // Check for circular references
+    if (visited.has(ruleKey)) {
+      warnings.push(`Circular reference detected for rule '${ruleKey}'`);
+      return {
+        ruleName: ruleKey,
+        complexity: 1,
+        ruleType: 'circular',
+        isFinite: true,
+        variables: [],
+        depth: visited.size,
+        warnings
+      };
+    }
+    
+    // Check maximum depth
+    if (visited.size >= maxDepth) {
+      warnings.push(`Maximum depth (${maxDepth}) reached, complexity may be underestimated`);
+      return {
+        ruleName: ruleKey,
+        complexity: 1,
+        ruleType: 'max-depth',
+        isFinite: true,
+        variables: [],
+        depth: visited.size,
+        warnings
+      };
+    }
+    
+    const newVisited = new Set(visited);
+    newVisited.add(ruleKey);
+    
+    // Handle static grammar rules
+    if (ruleKey in this.grammar) {
+      ruleType = 'static';
+      complexity = this.calculateStaticRuleComplexity(ruleKey, newVisited, maxDepth, variables, warnings);
+    }
+    // Handle weighted rules
+    else if (this.weightedRules.has(ruleKey)) {
+      ruleType = 'weighted';
+      complexity = this.calculateWeightedRuleComplexity(ruleKey, newVisited, maxDepth, variables, warnings);
+    }
+    // Handle function rules
+    else if (this.functionRules.has(ruleKey)) {
+      ruleType = 'function';
+      complexity = Number.POSITIVE_INFINITY;
+      isFinite = false;
+      warnings.push(`Function rule '${ruleKey}' has infinite complexity (cannot be calculated)`);
+    }
+    // Handle conditional rules
+    else if (this.conditionalRules.has(ruleKey)) {
+      ruleType = 'conditional';
+      complexity = this.calculateConditionalRuleComplexity(ruleKey, newVisited, maxDepth, variables, warnings);
+    }
+    // Handle sequential rules
+    else if (this.sequentialRules.has(ruleKey)) {
+      ruleType = 'sequential';
+      complexity = this.calculateSequentialRuleComplexity(ruleKey, newVisited, maxDepth, variables, warnings);
+    }
+    // Handle range rules
+    else if (this.rangeRules.has(ruleKey)) {
+      ruleType = 'range';
+      complexity = this.calculateRangeRuleComplexity(ruleKey);
+    }
+    // Handle template rules
+    else if (this.templateRules.has(ruleKey)) {
+      ruleType = 'template';
+      complexity = this.calculateTemplateRuleComplexity(ruleKey, newVisited, maxDepth, variables, warnings);
+    }
+    
+    return {
+      ruleName: ruleKey,
+      complexity,
+      ruleType,
+      isFinite,
+      variables: Array.from(variables),
+      depth: visited.size,
+      warnings
+    };
+  }
+
+  /**
+   * Calculate complexity for static grammar rules
+   * @private
+   */
+  private calculateStaticRuleComplexity(
+    ruleKey: string, 
+    visited: Set<string>, 
+    maxDepth: number,
+    variables: Set<string>,
+    warnings: string[]
+  ): number {
+    const values = this.grammar[ruleKey];
+    let totalComplexity = 0;
+    
+    for (const value of values) {
+      const valueVariables = this.findVariables(value);
+      
+      if (valueVariables.length === 0) {
+        // Literal string
+        totalComplexity += 1;
+      } else {
+        // Calculate complexity by multiplying all variable complexities
+        let valueComplexity = 1;
+        for (const variable of valueVariables) {
+          variables.add(variable);
+          if (visited.has(variable)) {
+            // Circular reference detected during recursion
+            warnings.push(`Circular reference detected for rule '${variable}'`);
+            valueComplexity *= 1; // Treat as single possibility to avoid infinite recursion
+          } else if (visited.size >= maxDepth) {
+            // Max depth reached during recursion
+            warnings.push(`Maximum depth (${maxDepth}) reached while analyzing '${variable}', complexity may be underestimated`);
+            valueComplexity *= 1; // Treat as single possibility
+          } else if (this.hasRule(variable)) {
+            const varResult = this.calculateRuleComplexity(variable, visited, maxDepth);
+            if (!varResult.isFinite) {
+              return Number.POSITIVE_INFINITY;
+            }
+            valueComplexity *= varResult.complexity;
+            warnings.push(...varResult.warnings);
+          } else {
+            warnings.push(`Missing rule '${variable}' referenced in '${ruleKey}'`);
+            valueComplexity *= 1; // Treat as single possibility
+          }
+        }
+        totalComplexity += valueComplexity;
+      }
+    }
+    
+    return totalComplexity;
+  }
+
+  /**
+   * Calculate complexity for weighted rules
+   * @private
+   */
+  private calculateWeightedRuleComplexity(
+    ruleKey: string, 
+    visited: Set<string>, 
+    maxDepth: number,
+    variables: Set<string>,
+    warnings: string[]
+  ): number {
+    const rule = this.weightedRules.get(ruleKey)!;
+    let totalComplexity = 0;
+    
+    for (const value of rule.values) {
+      const valueVariables = this.findVariables(value);
+      
+      if (valueVariables.length === 0) {
+        totalComplexity += 1;
+      } else {
+        let valueComplexity = 1;
+        for (const variable of valueVariables) {
+          variables.add(variable);
+          if (visited.has(variable)) {
+            warnings.push(`Circular reference detected for rule '${variable}'`);
+            valueComplexity *= 1;
+          } else if (visited.size >= maxDepth) {
+            warnings.push(`Maximum depth (${maxDepth}) reached while analyzing '${variable}', complexity may be underestimated`);
+            valueComplexity *= 1;
+          } else if (this.hasRule(variable)) {
+            const varResult = this.calculateRuleComplexity(variable, visited, maxDepth);
+            if (!varResult.isFinite) {
+              return Number.POSITIVE_INFINITY;
+            }
+            valueComplexity *= varResult.complexity;
+            warnings.push(...varResult.warnings);
+          } else {
+            warnings.push(`Missing rule '${variable}' referenced in '${ruleKey}'`);
+            valueComplexity *= 1;
+          }
+        }
+        totalComplexity += valueComplexity;
+      }
+    }
+    
+    return totalComplexity;
+  }
+
+  /**
+   * Calculate complexity for conditional rules
+   * @private
+   */
+  private calculateConditionalRuleComplexity(
+    ruleKey: string, 
+    visited: Set<string>, 
+    maxDepth: number,
+    variables: Set<string>,
+    warnings: string[]
+  ): number {
+    const rule = this.conditionalRules.get(ruleKey)!;
+    let totalComplexity = 0;
+    
+    for (const condition of rule.conditions) {
+      const values = condition.then || condition.default || [];
+      
+      for (const value of values) {
+        const valueVariables = this.findVariables(value);
+        
+        if (valueVariables.length === 0) {
+          totalComplexity += 1;
+        } else {
+          let valueComplexity = 1;
+          for (const variable of valueVariables) {
+            variables.add(variable);
+            if (this.hasRule(variable)) {
+              const varResult = this.calculateRuleComplexity(variable, visited, maxDepth);
+              if (!varResult.isFinite) {
+                return Number.POSITIVE_INFINITY;
+              }
+              valueComplexity *= varResult.complexity;
+              warnings.push(...varResult.warnings);
+            } else {
+              warnings.push(`Missing rule '${variable}' referenced in '${ruleKey}'`);
+              valueComplexity *= 1;
+            }
+          }
+          totalComplexity += valueComplexity;
+        }
+      }
+    }
+    
+    return totalComplexity;
+  }
+
+  /**
+   * Calculate complexity for sequential rules
+   * @private
+   */
+  private calculateSequentialRuleComplexity(
+    ruleKey: string, 
+    visited: Set<string>, 
+    maxDepth: number,
+    variables: Set<string>,
+    warnings: string[]
+  ): number {
+    const rule = this.sequentialRules.get(ruleKey)!;
+    let totalComplexity = 0;
+    
+    for (const value of rule.values) {
+      const valueVariables = this.findVariables(value);
+      
+      if (valueVariables.length === 0) {
+        totalComplexity += 1;
+      } else {
+        let valueComplexity = 1;
+        for (const variable of valueVariables) {
+          variables.add(variable);
+          if (this.hasRule(variable)) {
+            const varResult = this.calculateRuleComplexity(variable, visited, maxDepth);
+            if (!varResult.isFinite) {
+              return Number.POSITIVE_INFINITY;
+            }
+            valueComplexity *= varResult.complexity;
+            warnings.push(...varResult.warnings);
+          } else {
+            warnings.push(`Missing rule '${variable}' referenced in '${ruleKey}'`);
+            valueComplexity *= 1;
+          }
+        }
+        totalComplexity += valueComplexity;
+      }
+    }
+    
+    return totalComplexity;
+  }
+
+  /**
+   * Calculate complexity for range rules
+   * @private
+   */
+  private calculateRangeRuleComplexity(ruleKey: string): number {
+    const rule = this.rangeRules.get(ruleKey)!;
+    const step = rule.step || 1;
+    return Math.floor((rule.max - rule.min) / step) + 1;
+  }
+
+  /**
+   * Calculate complexity for template rules
+   * @private
+   */
+  private calculateTemplateRuleComplexity(
+    ruleKey: string, 
+    visited: Set<string>, 
+    maxDepth: number,
+    variables: Set<string>,
+    warnings: string[]
+  ): number {
+    const rule = this.templateRules.get(ruleKey)!;
+    const templateVariables = this.findVariables(rule.template);
+    let complexity = 1;
+    
+    for (const variable of templateVariables) {
+      variables.add(variable);
+      if (rule.variables[variable]) {
+        // Template-local variable
+        complexity *= rule.variables[variable].length;
+      } else if (this.hasRule(variable)) {
+        // Reference to external rule
+        const varResult = this.calculateRuleComplexity(variable, visited, maxDepth);
+        if (!varResult.isFinite) {
+          return Number.POSITIVE_INFINITY;
+        }
+        complexity *= varResult.complexity;
+        warnings.push(...varResult.warnings);
+      } else {
+        warnings.push(`Missing rule '${variable}' referenced in template '${ruleKey}'`);
+        complexity *= 1;
+      }
+    }
+    
+    return complexity;
+  }
+
+  /**
+   * Calculate total complexity across all rules in the grammar
+   * 
+   * This method analyzes the entire grammar and calculates the total complexity
+   * by examining all defined rules and their interconnections. It provides
+   * comprehensive statistics about the generative potential of the grammar.
+   * 
+   * @param maxDepth - Maximum recursion depth to prevent stack overflow (default: 50)
+   * 
+   * @returns TotalComplexityResult with detailed analysis of the entire grammar
+   * 
+   * @example
+   * ```typescript
+   * parser.addRule('colors', ['red', 'blue']);
+   * parser.addRule('animals', ['cat', 'dog', 'bird']);
+   * parser.addRule('description', ['%colors% %animals%']);
+   * 
+   * const result = parser.calculateTotalComplexity();
+   * console.log(result.totalComplexity); // Sum of all rule complexities
+   * console.log(result.mostComplexRules); // Rules with highest complexity
+   * console.log(result.averageComplexity); // Average complexity per rule
+   * ```
+   * 
+   * @since 1.1.0
+   */
+  public calculateTotalComplexity(maxDepth: number = 50): TotalComplexityResult {
+    const allRuleKeys = new Set([
+      ...Object.keys(this.grammar),
+      ...Array.from(this.functionRules.keys()),
+      ...Array.from(this.weightedRules.keys()),
+      ...Array.from(this.conditionalRules.keys()),
+      ...Array.from(this.sequentialRules.keys()),
+      ...Array.from(this.rangeRules.keys()),
+      ...Array.from(this.templateRules.keys())
+    ]);
+
+    const complexityByRule: ComplexityResult[] = [];
+    const warnings: string[] = [];
+    const circularReferences: string[] = [];
+    let totalComplexity = 0;
+    let isFinite = true;
+
+    // Calculate complexity for each rule
+    for (const ruleKey of allRuleKeys) {
+      try {
+        const result = this.calculateRuleComplexity(ruleKey, new Set(), maxDepth);
+        complexityByRule.push(result);
+        
+        if (!result.isFinite) {
+          isFinite = false;
+        } else {
+          totalComplexity += result.complexity;
+        }
+        
+        warnings.push(...result.warnings);
+        
+        if (result.warnings.some(w => w.includes('Circular reference'))) {
+          circularReferences.push(ruleKey);
+        }
+      } catch (error) {
+        warnings.push(`Error calculating complexity for rule '${ruleKey}': ${error}`);
+        complexityByRule.push({
+          ruleName: ruleKey,
+          complexity: 1,
+          ruleType: 'error',
+          isFinite: true,
+          variables: [],
+          depth: 0,
+          warnings: [`Error: ${error}`]
+        });
+      }
+    }
+
+    // Remove duplicate warnings
+    const uniqueWarnings = Array.from(new Set(warnings));
+    const uniqueCircularRefs = Array.from(new Set(circularReferences));
+
+    // Sort rules by complexity (descending)
+    const sortedByComplexity = [...complexityByRule]
+      .filter(r => r.isFinite)
+      .sort((a, b) => b.complexity - a.complexity);
+
+    // Get top 5 most complex rules
+    const mostComplexRules = sortedByComplexity.slice(0, 5);
+
+    // Calculate average complexity (only finite rules)
+    const finiteRules = complexityByRule.filter(r => r.isFinite);
+    const averageComplexity = finiteRules.length > 0 
+      ? finiteRules.reduce((sum, r) => sum + r.complexity, 0) / finiteRules.length 
+      : 0;
+
+    return {
+      totalComplexity: isFinite ? totalComplexity : Number.POSITIVE_INFINITY,
+      isFinite,
+      ruleCount: allRuleKeys.size,
+      complexityByRule,
+      averageComplexity,
+      mostComplexRules,
+      warnings: uniqueWarnings,
+      circularReferences: uniqueCircularRefs
+    };
   }
 }
