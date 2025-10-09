@@ -1,6 +1,6 @@
 {
   "name": "story-grammar",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A combinatorial grammar for narrative-based projects",
   "main": "dist/index.js",
   "types": "types/index.d.ts",
