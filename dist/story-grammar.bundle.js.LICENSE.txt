@@ -1,4 +1,8 @@
+/*! ./AdvancedRuleManagers.js */
+
 /*! ./ArticleModifier.js */
+
+/*! ./BaseRuleManager.js */
 
 /*! ./CapitalizationModifier.js */
 
@@ -18,11 +22,25 @@
 
 /*! ./VerbAgreementModifier.js */
 
+/*! ./analysis/ComplexityAnalyzer.js */
+
+/*! ./analysis/ProbabilityAnalyzer.js */
+
+/*! ./core/ErrorHandler.js */
+
+/*! ./core/VariableExpander.js */
+
 /*! ./english/index.js */
 
 /*! ./modifiers/index.js */
 
+/*! ./rules/RuleManager.js */
+
 /*! ./types.js */
+
+/*! ./utils/SeededRandom.js */
+
+/*! ./validation/GrammarValidator.js */
 
 /*!**********************!*\
   !*** ./src/index.ts ***!
@@ -48,9 +66,45 @@
   !*** ./src/EnglishModifiers.ts ***!
   \*********************************/
 
+/*!**********************************!*\
+  !*** ./src/core/ErrorHandler.ts ***!
+  \**********************************/
+
+/*!**********************************!*\
+  !*** ./src/rules/RuleManager.ts ***!
+  \**********************************/
+
+/*!***********************************!*\
+  !*** ./src/utils/SeededRandom.ts ***!
+  \***********************************/
+
+/*!**************************************!*\
+  !*** ./src/core/VariableExpander.ts ***!
+  \**************************************/
+
+/*!**************************************!*\
+  !*** ./src/rules/BaseRuleManager.ts ***!
+  \**************************************/
+
 /*!****************************************!*\
   !*** ./src/modifiers/english/index.ts ***!
   \****************************************/
+
+/*!*******************************************!*\
+  !*** ./src/rules/AdvancedRuleManagers.ts ***!
+  \*******************************************/
+
+/*!********************************************!*\
+  !*** ./src/analysis/ComplexityAnalyzer.ts ***!
+  \********************************************/
+
+/*!********************************************!*\
+  !*** ./src/validation/GrammarValidator.ts ***!
+  \********************************************/
+
+/*!*********************************************!*\
+  !*** ./src/analysis/ProbabilityAnalyzer.ts ***!
+  \*********************************************/
 
 /*!**************************************************!*\
   !*** ./src/modifiers/english/ArticleModifier.ts ***!

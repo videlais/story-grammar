@@ -11,7 +11,7 @@ export * from './types.js';
 // New Modifiers namespace
 export * as Modifiers from './modifiers/index.js';
 
-// English modifiers (backward compatibility)
+// English modifiers (backward compatibility) - use comprehensive implementation
 export {
   EnglishArticleModifier,
   EnglishPluralizationModifier,

@@ -10,4 +10,5 @@ export { PossessiveModifier } from './PossessiveModifier.js';
 export { VerbAgreementModifier } from './VerbAgreementModifier.js';
 export { PunctuationCleanupModifier } from './PunctuationCleanupModifier.js';
 export declare const AllEnglishModifiers: import("../../types.js").Modifier[];
+export declare const BasicEnglishModifiers: import("../../types.js").Modifier[];
 //# sourceMappingURL=index.d.ts.map

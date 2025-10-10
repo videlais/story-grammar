@@ -26,4 +26,9 @@ export const AllEnglishModifiers = [
     VerbAgreementModifier,
     PunctuationCleanupModifier
 ];
+export const BasicEnglishModifiers = [
+    ArticleModifier,
+    PluralizationModifier,
+    OrdinalModifier
+];
 //# sourceMappingURL=index.js.map

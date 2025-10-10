@@ -7,7 +7,7 @@ export { Parser } from './Parser.js';
 export * from './types.js';
 // New Modifiers namespace
 export * as Modifiers from './modifiers/index.js';
-// English modifiers (backward compatibility)
+// English modifiers (backward compatibility) - use comprehensive implementation
 export { EnglishArticleModifier, EnglishPluralizationModifier, EnglishOrdinalModifier, EnglishCapitalizationModifier, EnglishPossessiveModifier, EnglishVerbAgreementModifier, PunctuationCleanupModifier, AllEnglishModifiers, BasicEnglishModifiers } from './EnglishModifiers.js';
 // Re-export for backward compatibility
 export { Parser as StoryGrammar } from './Parser.js';
