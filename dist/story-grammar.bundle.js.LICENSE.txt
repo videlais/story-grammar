@@ -32,6 +32,14 @@
 
 /*! ./english/index.js */
 
+/*! ./modifiers/english/ArticleModifier.js */
+
+/*! ./modifiers/english/CapitalizationModifier.js */
+
+/*! ./modifiers/english/OrdinalModifier.js */
+
+/*! ./modifiers/english/PluralizationModifier.js */
+
 /*! ./modifiers/index.js */
 
 /*! ./rules/RuleManager.js */

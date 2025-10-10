@@ -1,6 +1,6 @@
 /**
- * English punctuation cleanup modifier
- * Cleans up spacing around punctuation marks
+ * Punctuation cleanup modifier
+ * Fixes common punctuation issues like double spaces and spacing around punctuation
  */
 export const PunctuationCleanupModifier = {
     name: 'englishPunctuationCleanup',

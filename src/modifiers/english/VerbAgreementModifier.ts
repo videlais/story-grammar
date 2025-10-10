@@ -1,6 +1,6 @@
 /**
  * English verb agreement modifier
- * Handles subject-verb agreement for "is/are" constructions
+ * Handles basic subject-verb agreement for common verbs
  */
 
 import { Modifier } from '../../types.js';
