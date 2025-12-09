@@ -1,6 +1,6 @@
 {
   "name": "story-grammar",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "A combinatorial grammar for narrative-based projects",
   "main": "dist/index.js",
   "types": "types/index.d.ts",
@@ -54,6 +54,15 @@
   "author": "Dan Cox",
   "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist",
+    "types",
+    "README.md",
+    "LICENSE"
+  ],
   "bugs": {
     "url": "https://github.com/videlais/story-grammar/issues"
   },
@@ -64,8 +73,8 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/jest": "^30.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.48.1",
-    "@typescript-eslint/parser": "^8.48.1",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/parser": "^8.49.0",
     "eslint": "^9.39.1",
     "jest": "^30.2.0",
     "ts-jest": "^29.4.6",

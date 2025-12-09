@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+types/
+
+# Test coverage
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Documentation build (keep for GitHub Pages)
+!docs/
+
+# Source and configuration (needed for development)
+!src/
+!test/
+!*.md
+!LICENSE
+!package.json
+!tsconfig*.json
+!jest.config.js
+!eslint.config.js
+!webpack*.cjs
+!.github/
