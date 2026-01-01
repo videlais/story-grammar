@@ -51,7 +51,7 @@ jobs:
         fi
         
     - name: Upload dependency report
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: dependency-report
         path: |
@@ -84,7 +84,7 @@ jobs:
         license-checker --csv > licenses.csv
         
     - name: Upload license report
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: license-report
         path: |
