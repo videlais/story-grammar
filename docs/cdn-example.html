@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Grammar - CDN Example</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #007acc;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #007acc;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #555;
+            margin-top: 20px;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 4px solid #007acc;
+        }
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+        .output {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #007acc;
+            margin: 15px 0;
+        }
+        .output h4 {
+            margin-top: 0;
+            color: #007acc;
+        }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px 5px 5px 0;
+        }
+        button:hover {
+            background: #005a9e;
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .cdn-links {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .cdn-links a {
+            color: #007acc;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .cdn-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Story Grammar - CDN Usage Example</h1>
+        <p>
+            This page demonstrates how to use the <strong>story-grammar</strong> library directly in a web browser 
+            using a CDN (Content Delivery Network). No build tools or npm installation required!
+        </p>
+
+        <div class="success">
+            <strong>✅ Library Loaded Successfully!</strong><br>
+            The story-grammar library is now available as <code>window.StoryGrammar</code>
+        </div>
+
+        <h2>📦 CDN Options</h2>
+        
+        <div class="cdn-links">
+            <h3>Option 1: Direct from GitHub Pages (Recommended for this project)</h3>
+            <pre><code>&lt;script src="https://yourusername.github.io/story-grammar/story-grammar.bundle.js"&gt;&lt;/script&gt;</code></pre>
+            
+            <h3>Option 2: Using jsDelivr CDN</h3>
+            <pre><code>&lt;script src="https://cdn.jsdelivr.net/npm/story-grammar@1.2.3/dist/story-grammar.bundle.js"&gt;&lt;/script&gt;</code></pre>
+            
+            <h3>Option 3: Using unpkg CDN</h3>
+            <pre><code>&lt;script src="https://unpkg.com/story-grammar@1.2.3/dist/story-grammar.bundle.js"&gt;&lt;/script&gt;</code></pre>
+            
+            <h3>Option 4: Local Bundle (Current Example)</h3>
+            <pre><code>&lt;script src="story-grammar.bundle.js"&gt;&lt;/script&gt;</code></pre>
+        </div>
+
+        <div class="note">
+            <strong>💡 Note:</strong> This example uses the local bundle. Replace with a CDN URL for production use.
+        </div>
+    </div>
+
+    <!-- Load the story-grammar library from local bundle -->
+    <script src="story-grammar.bundle.js"></script>
+
+    <div class="container">
+        <h2>Quick Start Example</h2>
+        <p>Click the button to generate a random story introduction:</p>
+        
+        <button onclick="generateStory()">Generate Story</button>
+        <div id="storyOutput" class="output" style="display:none;">
+            <h4>Generated Story:</h4>
+            <p id="storyText"></p>
+        </div>
+
+        <h3>Code:</h3>
+        <pre><code>// Create a new parser instance
+const parser = new StoryGrammar.Parser();
+
+// Define grammar rules
+parser.addRule('hero', ['a brave knight', 'a clever wizard', 'a skilled archer']);
+parser.addRule('villain', ['a dark sorcerer', 'an evil dragon', 'a corrupt king']);
+parser.addRule('place', ['ancient castle', 'mystical forest', 'forgotten temple']);
+parser.addRule('story', ['%hero% must defeat %villain% in the %place%.']);
+
+// Generate text
+const result = parser.expand('story');
+console.log(result);</code></pre>
+    </div>
+
+    <div class="container">
+        <h2>Weighted Rules Example</h2>
+        <p>Generate loot with different rarity levels:</p>
+        
+        <button onclick="generateLoot()">Generate Loot</button>
+        <div id="lootOutput" class="output" style="display:none;">
+            <h4>Generated Loot:</h4>
+            <p id="lootText"></p>
+        </div>
+
+        <h3>Code:</h3>
+        <pre><code>const parser = new StoryGrammar.Parser();
+
+// Add weighted rules (70% common, 20% rare, 10% legendary)
+parser.addWeightedRule('rarity', 
+    ['common', 'rare', 'legendary'], 
+    [0.7, 0.2, 0.1]
+);
+
+parser.addRule('item', ['sword', 'shield', 'bow', 'staff']);
+parser.addRule('loot', ['You found a %rarity% %item%!']);
+
+const result = parser.expand('loot');</code></pre>
+    </div>
+
+    <div class="container">
+        <h2>Seeded Random Example</h2>
+        <p>Generate predictable results using seeds:</p>
+        
+        <button onclick="generateSeeded('seed1')">Use Seed "seed1"</button>
+        <button onclick="generateSeeded('seed2')">Use Seed "seed2"</button>
+        <button onclick="generateSeeded('seed1')">Use Seed "seed1" Again</button>
+        
+        <div id="seededOutput" class="output" style="display:none;">
+            <h4>Generated with Seed:</h4>
+            <p id="seededText"></p>
+        </div>
+
+        <h3>Code:</h3>
+        <pre><code>const parser = new StoryGrammar.Parser({ seed: 'myseed' });
+
+parser.addRule('color', ['red', 'blue', 'green', 'yellow']);
+parser.addRule('animal', ['cat', 'dog', 'bird', 'fish']);
+parser.addRule('result', ['The %color% %animal%']);
+
+// Same seed = same result every time
+const result = parser.expand('result');</code></pre>
+    </div>
+
+    <div class="container">
+        <h2>Modifiers Example</h2>
+        <p>Use built-in English modifiers for articles and pluralization:</p>
+        
+        <button onclick="generateWithModifiers()">Generate Sentence</button>
+        <div id="modifierOutput" class="output" style="display:none;">
+            <h4>Generated Sentence:</h4>
+            <p id="modifierText"></p>
+        </div>
+
+        <h3>Code:</h3>
+        <pre><code>const parser = new StoryGrammar.Parser();
+
+// Load English modifiers
+parser.loadModifiers(StoryGrammar.AllEnglishModifiers);
+
+parser.addRule('animal', ['cat', 'dog', 'elephant', 'owl']);
+parser.addRule('number', ['1', '2', '3']);
+
+// Use .a for articles, .s for plurals
+parser.addRule('sentence', [
+    'I saw %animal.a%.',
+    'I have %number% %animal.s%.'
+]);
+
+const result = parser.expand('sentence');</code></pre>
+    </div>
+
+    <div class="container">
+        <h2>Advanced: Variables and Tracking</h2>
+        <p>Generate a story with variables that persist across expansions:</p>
+        
+        <button onclick="generateWithVariables()">Generate Adventure</button>
+        <div id="variableOutput" class="output" style="display:none;">
+            <h4>Generated Adventure:</h4>
+            <p id="variableText"></p>
+        </div>
+
+        <h3>Code:</h3>
+        <pre><code>const parser = new StoryGrammar.Parser();
+
+parser.addRule('name', ['Alice', 'Bob', 'Charlie']);
+parser.addRule('weapon', ['sword', 'bow', 'staff']);
+
+// Use [name:rule] to save the value
+parser.addRule('intro', ['[hero:name] picked up a [weapon:weapon].']);
+parser.addRule('action', ['%hero% swung the %weapon% bravely!']);
+parser.addRule('story', ['%intro% %action%']);
+
+const result = parser.expand('story');</code></pre>
+    </div>
+
+    <div class="container">
+        <h2>Complete HTML Template</h2>
+        <p>Copy and paste this template to get started quickly:</p>
+        
+        <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;My Story Grammar Project&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Story Generator&lt;/h1&gt;
+    &lt;button onclick="generate()"&gt;Generate&lt;/button&gt;
+    &lt;div id="output"&gt;&lt;/div&gt;
+
+    &lt;!-- Load from CDN --&gt;
+    &lt;script src="https://cdn.jsdelivr.net/npm/story-grammar@1.2.3/dist/story-grammar.bundle.js"&gt;&lt;/script&gt;
+    
+    &lt;script&gt;
+        // Your code here
+        const parser = new StoryGrammar.Parser();
+        
+        parser.addRule('greeting', ['Hello', 'Hi', 'Hey']);
+        parser.addRule('name', ['World', 'Friend', 'Developer']);
+        parser.addRule('message', ['%greeting%, %name%!']);
+        
+        function generate() {
+            const result = parser.expand('message');
+            document.getElementById('output').textContent = result;
+        }
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    </div>
+
+    <div class="container">
+        <h2>More Resources</h2>
+        <ul>
+            <li><strong>GitHub Repository:</strong> <a href="https://github.com/videlais/story-grammar" target="_blank">github.com/videlais/story-grammar</a></li>
+            <li><strong>NPM Package:</strong> <a href="https://www.npmjs.com/package/story-grammar" target="_blank">npmjs.com/package/story-grammar</a></li>
+            <li><strong>Full Documentation:</strong> See the README.md in the repository</li>
+        </ul>
+    </div>
+
+    <script>
+        // Verify the library is loaded
+        if (typeof StoryGrammar === 'undefined') {
+            alert('Story Grammar library failed to load!');
+        }
+
+        // Example 1: Basic Story Generation
+        function generateStory() {
+            const parser = new StoryGrammar.Parser();
+            
+            parser.addRule('hero', ['a brave knight', 'a clever wizard', 'a skilled archer', 'a mysterious rogue']);
+            parser.addRule('villain', ['a dark sorcerer', 'an evil dragon', 'a corrupt king', 'an ancient demon']);
+            parser.addRule('place', ['ancient castle', 'mystical forest', 'forgotten temple', 'haunted ruins']);
+            parser.addRule('story', ['%hero% must defeat %villain% in the %place%.']);
+            
+            const result = parser.expand('story');
+            
+            document.getElementById('storyOutput').style.display = 'block';
+            document.getElementById('storyText').textContent = result;
+        }
+
+        // Example 2: Weighted Loot Generation
+        function generateLoot() {
+            const parser = new StoryGrammar.Parser();
+            
+            // 70% common, 20% rare, 10% legendary
+            parser.addWeightedRule('rarity', 
+                ['common', 'rare', 'legendary'], 
+                [0.7, 0.2, 0.1]
+            );
+            
+            parser.addRule('item', ['sword', 'shield', 'bow', 'staff', 'dagger', 'helmet']);
+            parser.addRule('loot', ['You found a %rarity% %item%!']);
+            
+            const result = parser.expand('loot');
+            
+            document.getElementById('lootOutput').style.display = 'block';
+            document.getElementById('lootText').textContent = result;
+        }
+
+        // Example 3: Seeded Random Generation
+        function generateSeeded(seed) {
+            const parser = new StoryGrammar.Parser({ seed: seed });
+            
+            parser.addRule('color', ['red', 'blue', 'green', 'yellow', 'purple']);
+            parser.addRule('animal', ['cat', 'dog', 'bird', 'fish', 'rabbit']);
+            parser.addRule('result', ['The %color% %animal%']);
+            
+            const result = parser.expand('result');
+            
+            document.getElementById('seededOutput').style.display = 'block';
+            document.getElementById('seededText').textContent = `Seed "${seed}": ${result}`;
+        }
+
+        // Example 4: Using Modifiers
+        function generateWithModifiers() {
+            const parser = new StoryGrammar.Parser();
+            
+            // Load all English modifiers
+            parser.loadModifiers(StoryGrammar.AllEnglishModifiers);
+            
+            parser.addRule('animal', ['cat', 'dog', 'elephant', 'owl', 'umbrella bird']);
+            parser.addRule('number', ['1', '2', '3', '5']);
+            parser.addRule('sentence', [
+                'I saw %animal.a%.',
+                'I have %number% %animal.s%.',
+                'Look at that %animal%!',
+                'The %animal.s% are running.'
+            ]);
+            
+            const result = parser.expand('sentence');
+            
+            document.getElementById('modifierOutput').style.display = 'block';
+            document.getElementById('modifierText').textContent = result;
+        }
+
+        // Example 5: Variables and Tracking
+        function generateWithVariables() {
+            const parser = new StoryGrammar.Parser();
+            
+            parser.addRule('name', ['Alice', 'Bob', 'Charlie', 'Diana']);
+            parser.addRule('weapon', ['sword', 'bow', 'staff', 'axe']);
+            parser.addRule('enemy', ['goblin', 'troll', 'skeleton', 'bandit']);
+            
+            // Save values with [variable:rule]
+            parser.addRule('intro', ['[hero:name] picked up a [weapon:weapon].']);
+            parser.addRule('encounter', ['[enemy:enemy] appeared!']);
+            parser.addRule('action', ['%hero% swung the %weapon% at the %enemy%!']);
+            parser.addRule('story', ['%intro% %encounter% %action%']);
+            
+            const result = parser.expand('story');
+            
+            document.getElementById('variableOutput').style.display = 'block';
+            document.getElementById('variableText').textContent = result;
+        }
+
+        // Generate initial examples on page load
+        window.addEventListener('load', function() {
+            console.log('Story Grammar library loaded!');
+            console.log('Available:', Object.keys(StoryGrammar));
+        });
+    </script>
+</body>
+</html>
