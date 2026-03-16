@@ -35,8 +35,8 @@ export class ComplexityAnalyzer {
   ): ComplexityResult {
     const warnings: string[] = [];
     const variables: Set<string> = new Set();
-    let ruleType = 'unknown';
-    let complexity = 1;
+    //let ruleType = 'unknown';
+    let complexity: number;
     let isFinite = true;
     
     // Check if rule exists
@@ -77,7 +77,7 @@ export class ComplexityAnalyzer {
     
     // Determine rule type and calculate complexity
     const type = this.ruleManager.getRuleType(ruleKey);
-    ruleType = type || 'unknown';
+    const ruleType = type || 'unknown';
     
     switch (type) {
       case 'static':

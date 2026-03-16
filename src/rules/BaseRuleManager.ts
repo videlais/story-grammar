@@ -201,7 +201,9 @@ export class FunctionRuleManager extends BaseRuleManager<FunctionRule> {
       }
       return random.randomChoice(values);
     } catch (error) {
-      throw new Error(`Error executing function rule '${key}': ${(error as Error).message}`);
+      const err = new Error(`Error executing function rule '${key}': ${(error as Error).message}`);
+      (err as Error & { cause: unknown }).cause = error;
+      throw err;
     }
   }
 }

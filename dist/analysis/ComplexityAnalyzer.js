@@ -20,8 +20,8 @@ export class ComplexityAnalyzer {
     calculateRuleComplexity(ruleKey, visited = new Set(), maxDepth = 50) {
         const warnings = [];
         const variables = new Set();
-        let ruleType = 'unknown';
-        let complexity = 1;
+        //let ruleType = 'unknown';
+        let complexity;
         let isFinite = true;
         // Check if rule exists
         if (!this.ruleManager.hasRule(ruleKey)) {
@@ -57,7 +57,7 @@ export class ComplexityAnalyzer {
         newVisited.add(ruleKey);
         // Determine rule type and calculate complexity
         const type = this.ruleManager.getRuleType(ruleKey);
-        ruleType = type || 'unknown';
+        const ruleType = type || 'unknown';
         switch (type) {
             case 'static':
                 complexity = this.calculateStaticRuleComplexity(ruleKey, newVisited, maxDepth, variables, warnings);
