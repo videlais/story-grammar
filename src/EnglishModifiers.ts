@@ -15,20 +15,27 @@ import { Modifier } from './types.js';
 /**
  * English possessive modifier
  * Handles English possessive forms ('s and s')
+ *
+ * @property {string} name - Modifier identifier: 'englishPossessives'
+ * @property {function(string): boolean} condition - Returns true when text contains
+ *   a word followed by the literal "possessive" marker, or an existing apostrophe-s pattern.
+ * @property {function(string): string} transform - Replaces "word possessive" with the
+ *   correct possessive form ("word's" or "words'") and cleans up double possessives.
+ * @property {number} priority - Execution priority (6)
  */
 export const EnglishPossessiveModifier: Modifier = {
   name: 'englishPossessives',
   condition: (text: string) => {
-    // Look for possessive patterns: word + possessive marker
+    // Matches "word possessive" markers or existing apostrophe-s patterns
     return /\b\w+\s+possessive\b/i.test(text) || /\b\w+'s?\s+\w/.test(text);
   },
   transform: (text: string) => {
-    // Handle explicit possessive marker
+    // Replace "word possessive" with "word's" or "words'" depending on trailing "s"
     text = text.replace(/\b(\w+)\s+possessive\b/gi, (match, word) => {
       return word.endsWith('s') ? word + "'" : word + "'s";
     });
     
-    // Fix double possessives (word's's -> word's)
+    // Clean up accidental double possessives (e.g. "word's's" -> "word's")
     text = text.replace(/(\w+)'s's/g, "$1's");
     
     return text;
@@ -39,21 +46,28 @@ export const EnglishPossessiveModifier: Modifier = {
 /**
  * Punctuation cleanup modifier
  * Fixes common punctuation issues like double spaces and spacing around punctuation
+ *
+ * @property {string} name - Modifier identifier: 'punctuationCleanup'
+ * @property {function(string): boolean} condition - Returns true when text has
+ *   consecutive whitespace, whitespace before punctuation, or missing space after punctuation.
+ * @property {function(string): string} transform - Normalizes whitespace and punctuation spacing.
+ * @property {number} priority - Execution priority (1 — runs last to clean up after other modifiers)
  */
 export const PunctuationCleanupModifier: Modifier = {
   name: 'punctuationCleanup',
   condition: (text: string) => {
-    // Look for punctuation spacing issues
+    // Detect: multiple consecutive spaces, space before punctuation, or punctuation
+    // immediately followed by a non-space character
     return /\s{2,}/.test(text) || /\s[.!?,:;]/.test(text) || /[.!?,:;]\S/.test(text);
   },
   transform: (text: string) => {
-    // Fix multiple spaces
+    // Collapse runs of whitespace into a single space
     text = text.replace(/\s{2,}/g, ' ');
     
-    // Fix space before punctuation
+    // Remove errant space before sentence-ending or delimiting punctuation
     text = text.replace(/\s([.!?,:;])/g, '$1');
     
-    // Add space after punctuation if missing (except at end)
+    // Insert a space after punctuation when it's directly followed by a letter
     text = text.replace(/([.!?,:;])([A-Za-z])/g, '$1 $2');
     
     // Trim leading/trailing whitespace
@@ -64,26 +78,36 @@ export const PunctuationCleanupModifier: Modifier = {
   priority: 1
 };
 
+/**
+ * English verb agreement modifier
+ * Corrects subject-verb agreement for is/are and has/have
+ *
+ * @property {string} name - Modifier identifier: 'englishVerbAgreement'
+ * @property {function(string): boolean} condition - Returns true when singular subjects
+ *   are paired with plural verbs or vice versa.
+ * @property {function(string): string} transform - Swaps the verb to match the subject's number.
+ * @property {number} priority - Execution priority (5)
+ */
 export const EnglishVerbAgreementModifier: Modifier = {
   name: 'englishVerbAgreement',
   condition: (text: string) => {
-    // Look for agreement issues including has/have
+    // Detect singular subjects with plural verbs, or plural subjects with singular verbs
     return /\b(he|she|it)\s+are\b/i.test(text) || 
            /\b(they|many|several|few|all|both)\s+is\b/i.test(text) ||
            /\b(he|she|it)\s+have\b/i.test(text) ||
            /\b(they|many|several|few|all|both)\s+has\b/i.test(text);
   },
   transform: (text: string) => {
-    // Fix is/are agreement for singular subjects
+    // Singular subjects (he/she/it) require "is" not "are"
     text = text.replace(/\b(he|she|it)\s+are\b/gi, '$1 is');
     
-    // Fix is/are agreement for plural subjects and quantifiers
+    // Plural subjects and quantifiers require "are" not "is"
     text = text.replace(/\b(they|many|several|few|all|both)\s+is\b/gi, '$1 are');
     
-    // Fix has/have agreement for singular subjects
+    // Singular subjects (he/she/it) require "has" not "have"
     text = text.replace(/\b(he|she|it)\s+have\b/gi, '$1 has');
     
-    // Fix has/have agreement for plural subjects and quantifiers
+    // Plural subjects and quantifiers require "have" not "has"
     text = text.replace(/\b(they|many|several|few|all|both)\s+has\b/gi, '$1 have');
     
     return text;

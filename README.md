@@ -194,8 +194,6 @@ const result: string = parser.parse('%protagonist% %action% %treasure%');
 const stats: ParserStats = parser.getStats();
 ```
 
-See [`typescript-usage-example.ts`](./typescript-usage-example.ts) for a complete working example.
-
 ## Examples
 
 ### Basic Usage

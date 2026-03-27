@@ -5,10 +5,14 @@
 export const PluralizationModifier = {
     name: 'englishPluralization',
     condition: (text) => {
-        // Look for plural indicators: numbers > 1, "many", "several", "multiple", etc.
+        // Match plural quantifiers followed by a word:
+        //   - Quantifier adjectives: "many", "several", "multiple", etc.
+        //   - Digits > 1: matches numbers like 2, 30, 102 (but not 1, 11, 21…)
+        //   - Number words: "two" through "twenty"
+        //   - Zero/no: these also take the plural form in English
         return /\b(many|several|multiple|some|few|all|both|various|numerous|[2-9]\d*|\d*[02-9])\s+[a-zA-Z]+/i.test(text) ||
             /\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\s+[a-zA-Z]+/i.test(text) ||
-            /\b(zero|no)\s+[a-zA-Z]+/i.test(text); // Zero/no also takes plural
+            /\b(zero|no)\s+[a-zA-Z]+/i.test(text);
     },
     transform: (text) => {
         return text.replace(/\b(many|several|multiple|some|few|all|both|various|numerous|zero|no|[2-9]\d*|\d*[02-9]|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\s+([a-zA-Z]+)\b/gi, (match, quantifier, noun) => {
@@ -25,7 +29,9 @@ export const PluralizationModifier = {
  */
 function pluralize(noun) {
     const lowerNoun = noun.toLowerCase();
-    // Irregular plurals mapping
+    // Irregular plurals that don't follow standard English rules.
+    // Grouped loosely by origin: Latin/Greek forms, Old English holdovers,
+    // foreign loanwords, and zero-change (uncountable/collective) nouns.
     const irregularPlurals = {
         'addendum': 'addenda',
         'aircraft': 'aircraft',
@@ -133,31 +139,39 @@ function pluralize(noun) {
         // Preserve original case pattern
         return preserveCase(noun, irregularPlural);
     }
-    // Apply regular pluralization rules in order of specificity
-    // 1. Words ending in -s, -ss, -sh, -ch, -x, -z: add -es
+    // Apply regular pluralization rules in order of specificity.
+    // Rules are ordered so more specific patterns are tested first,
+    // falling through to the general "-s" default.
+    // 1. Sibilant endings (-s, -x, -z, -sh, -ch): English requires "-es" to
+    //    keep the consonant cluster pronounceable (e.g. "bus" -> "buses").
     if (/[sxz]$/.test(lowerNoun) || /[sc]h$/.test(lowerNoun)) {
         return noun + 'es';
     }
-    // 2. Words ending in consonant + y: change y to ies
+    // 2. Consonant + y: the "y" changes to "i" before "-es"
+    //    (e.g. "city" -> "cities"), because English avoids "ys" after consonants.
     if (/[bcdfghjklmnpqrstvwxz]y$/i.test(lowerNoun)) {
         return noun.slice(0, -1) + 'ies';
     }
-    // 3. Words ending in vowel + y: just add -s
+    // 3. Vowel + y: the "y" is preserved and just "-s" is added
+    //    (e.g. "day" -> "days"), because the preceding vowel keeps it regular.
     if (/[aeiou]y$/i.test(lowerNoun)) {
         return noun + 's';
     }
-    // 4. Words ending in -f or -fe: change to -ves (with exceptions)
+    // 4. Words ending in -f or -fe: typically change to "-ves"
+    //    (e.g. "knife" -> "knives"). The /fe?$/ pattern matches both endings.
     if (/fe?$/i.test(lowerNoun)) {
-        // Exceptions that just add -s
+        // These are established exceptions that simply add "-s" because they
+        // entered English from different origins or hardened into fixed forms.
         const fExceptions = ['belief', 'chief', 'cliff', 'proof', 'roof', 'safe', 'chef', 'handkerchief'];
         if (fExceptions.includes(lowerNoun)) {
             return noun + 's';
         }
         return noun.replace(/fe?$/i, 'ves');
     }
-    // 5. Words ending in consonant + o: add -es (with common exceptions)
+    // 5. Consonant + o: typically adds "-es" (e.g. "tomato" -> "tomatoes").
     if (/[bcdfghjklmnpqrstvwxz]o$/i.test(lowerNoun)) {
-        // Common exceptions that just add -s
+        // These loanwords and modern coinages have kept the simpler "-s" plural,
+        // often because they are abbreviations or borrowed from Italian/Spanish.
         const oExceptions = [
             'photo', 'piano', 'halo', 'disco', 'studio', 'radio', 'video',
             'auto', 'memo', 'pro', 'casino', 'patio', 'portfolio', 'logo',
@@ -168,11 +182,11 @@ function pluralize(noun) {
         }
         return noun + 'es';
     }
-    // 6. Words ending in vowel + o: just add -s
+    // 6. Vowel + o: just add "-s" (e.g. "zoo" -> "zoos").
     if (/[aeiou]o$/i.test(lowerNoun)) {
         return noun + 's';
     }
-    // 7. Default case: add -s
+    // 7. Default: add "-s" — the standard English plural ending.
     return noun + 's';
 }
 /**

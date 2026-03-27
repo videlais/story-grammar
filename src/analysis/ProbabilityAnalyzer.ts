@@ -217,7 +217,18 @@ export class ProbabilityAnalyzer {
     return outcomes;
   }
 
-  // Placeholder methods for other rule types
+  /**
+   * Calculate probabilities for weighted rules.
+   * Each value's probability is its weight divided by the total weight sum.
+   * Nested variables within values are recursively expanded.
+   * @param ruleKey - The weighted rule key to analyze
+   * @param visited - Set of already-visited rule keys (for circular reference detection)
+   * @param maxDepth - Maximum recursion depth
+   * @param maxOutcomes - Maximum number of outcomes to generate
+   * @param warnings - Accumulator for warning messages
+   * @returns Array of probability results for all possible outcomes
+   * @private
+   */
   private calculateWeightedRuleProbabilities(ruleKey: string, visited: Set<string>, maxDepth: number, maxOutcomes: number, warnings: string[]): ProbabilityResult[] {
     const rule = this.ruleManager.getWeightedRuleData(ruleKey);
     if (!rule) return [];
@@ -250,6 +261,13 @@ export class ProbabilityAnalyzer {
     return outcomes;
   }
 
+  /**
+   * Calculate probabilities for range rules.
+   * Enumerates all discrete values in the range; each has equal probability.
+   * @param ruleKey - The range rule key to analyze
+   * @returns Array of probability results for each value in the range
+   * @private
+   */
   private calculateRangeRuleProbabilities(ruleKey: string): ProbabilityResult[] {
     const rule = this.ruleManager.getRangeRuleData(ruleKey);
     if (!rule) return [];
@@ -267,6 +285,18 @@ export class ProbabilityAnalyzer {
     return outcomes;
   }
 
+  /**
+   * Calculate probabilities for template rules.
+   * Expands each template variable slot independently, computing the
+   * Cartesian product of all slot values and their combined probabilities.
+   * @param ruleKey - The template rule key to analyze
+   * @param visited - Set of already-visited rule keys (for circular reference detection)
+   * @param maxDepth - Maximum recursion depth
+   * @param maxOutcomes - Maximum number of outcomes to generate
+   * @param warnings - Accumulator for warning messages
+   * @returns Array of probability results for all template expansions
+   * @private
+   */
   private calculateTemplateRuleProbabilities(ruleKey: string, visited: Set<string>, maxDepth: number, maxOutcomes: number, warnings: string[]): ProbabilityResult[] {
     const rule = this.ruleManager.getTemplateRuleData(ruleKey);
     if (!rule) return [];
@@ -349,6 +379,18 @@ export class ProbabilityAnalyzer {
     );
   }
 
+  /**
+   * Calculate probabilities for sequential rules.
+   * Sequential rules cycle through values in order; for probability analysis
+   * each value is assumed equally likely (uniform distribution).
+   * @param ruleKey - The sequential rule key to analyze
+   * @param visited - Set of already-visited rule keys (for circular reference detection)
+   * @param maxDepth - Maximum recursion depth
+   * @param maxOutcomes - Maximum number of outcomes to generate
+   * @param warnings - Accumulator for warning messages
+   * @returns Array of probability results for each sequential value
+   * @private
+   */
   private calculateSequentialRuleProbabilities(ruleKey: string, visited: Set<string>, maxDepth: number, maxOutcomes: number, warnings: string[]): ProbabilityResult[] {
     const rule = this.ruleManager.getSequentialRuleData(ruleKey);
     if (!rule) return [];
@@ -377,6 +419,18 @@ export class ProbabilityAnalyzer {
     return outcomes;
   }
 
+  /**
+   * Calculate probabilities for conditional rules.
+   * Without runtime context, each condition branch is assumed equally likely.
+   * Within each branch, values are uniformly distributed.
+   * @param ruleKey - The conditional rule key to analyze
+   * @param visited - Set of already-visited rule keys (for circular reference detection)
+   * @param maxDepth - Maximum recursion depth
+   * @param maxOutcomes - Maximum number of outcomes to generate
+   * @param warnings - Accumulator for warning messages
+   * @returns Array of probability results across all condition branches
+   * @private
+   */
   private calculateConditionalRuleProbabilities(ruleKey: string, visited: Set<string>, maxDepth: number, maxOutcomes: number, warnings: string[]): ProbabilityResult[] {
     const rule = this.ruleManager.getConditionalRuleData(ruleKey);
     if (!rule) return [];
