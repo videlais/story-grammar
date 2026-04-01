@@ -3,7 +3,8 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "./dist-test",
-    "noEmit": true
+    "noEmit": true,
+    "types": ["jest"]
   },
   "include": [
     "src/**/*",
