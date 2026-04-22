@@ -3,7 +3,8 @@
   "compilerOptions": {
     "module": "CommonJS",
     "target": "ES2015",
-    "moduleResolution": "node",
+    "moduleResolution": "node10",
+    "ignoreDeprecations": "6.0",
     "declaration": false,
     "declarationMap": false,
     "declarationDir": null,
