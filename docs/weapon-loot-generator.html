@@ -584,36 +584,52 @@
             if (!weapon) return;
 
             const container = document.getElementById('loot');
+
+            const createStatLine = (label, value) => {
+                const line = document.createElement('div');
+                line.className = 'stat-line';
+
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'stat-label';
+                labelSpan.textContent = `${label}:`;
+
+                const valueSpan = document.createElement('span');
+                valueSpan.className = 'stat-value';
+                valueSpan.textContent = String(value);
+
+                line.appendChild(labelSpan);
+                line.appendChild(valueSpan);
+                return line;
+            };
             
             const weaponDiv = document.createElement('div');
             weaponDiv.className = `weapon-card ${weapon.rarity}`;
-            
-            let effectsHtml = '';
+
+            const rarityBadge = document.createElement('div');
+            rarityBadge.className = `rarity-badge ${weapon.rarity}`;
+            rarityBadge.textContent = String(weapon.rarity);
+
+            const weaponName = document.createElement('div');
+            weaponName.className = 'weapon-name';
+            weaponName.textContent = String(weapon.name);
+
+            const weaponType = document.createElement('div');
+            weaponType.className = 'weapon-type';
+            weaponType.textContent = String(weapon.type);
+
+            const weaponStatsContainer = document.createElement('div');
+            weaponStatsContainer.className = 'weapon-stats';
+            weaponStatsContainer.appendChild(createStatLine('Damage', weapon.damage));
+            weaponStatsContainer.appendChild(createStatLine('Durability', weapon.durability));
+
             if (weapon.specialEffect) {
-                effectsHtml = `
-                    <div class="stat-line">
-                        <span class="stat-label">Special Effect:</span>
-                        <span class="stat-value">${weapon.specialEffect}</span>
-                    </div>
-                `;
+                weaponStatsContainer.appendChild(createStatLine('Special Effect', weapon.specialEffect));
             }
-            
-            weaponDiv.innerHTML = `
-                <div class="rarity-badge ${weapon.rarity}">${weapon.rarity}</div>
-                <div class="weapon-name">${weapon.name}</div>
-                <div class="weapon-type">${weapon.type}</div>
-                <div class="weapon-stats">
-                    <div class="stat-line">
-                        <span class="stat-label">Damage:</span>
-                        <span class="stat-value">${weapon.damage}</span>
-                    </div>
-                    <div class="stat-line">
-                        <span class="stat-label">Durability:</span>
-                        <span class="stat-value">${weapon.durability}</span>
-                    </div>
-                    ${effectsHtml}
-                </div>
-            `;
+
+            weaponDiv.appendChild(rarityBadge);
+            weaponDiv.appendChild(weaponName);
+            weaponDiv.appendChild(weaponType);
+            weaponDiv.appendChild(weaponStatsContainer);
             
             container.appendChild(weaponDiv);
             
@@ -675,7 +691,7 @@
 
         // Clear all loot
         function clearLoot() {
-            document.getElementById('loot').innerHTML = '';
+            document.getElementById('loot').replaceChildren();
             document.getElementById('stats').style.display = 'none';
             weaponStats = {
                 common: 0,
