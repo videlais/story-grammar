@@ -89,6 +89,15 @@ describe('Complexity Calculation', () => {
       expect(result.ruleType).toBe('range');
     });
 
+    it('should use default range step when not provided', () => {
+      parser.addRangeRule('smallRange', { min: 3, max: 5, type: 'integer' });
+
+      const result = parser.calculateRuleComplexity('smallRange');
+
+      expect(result.complexity).toBe(3); // 3, 4, 5
+      expect(result.ruleType).toBe('range');
+    });
+
     it('should calculate complexity for template rules', () => {
       parser.addTemplateRule('address', {
         template: '%number% %street% %type%',
@@ -183,6 +192,159 @@ describe('Complexity Calculation', () => {
         parser.calculateRuleComplexity('nonexistent');
       }).toThrow("Rule 'nonexistent' does not exist");
     });
+
+    it('should return warning for unknown rule types', () => {
+      const internalParser = parser as unknown as {
+        ruleManager: {
+          hasRule: (key: string) => boolean;
+          getRuleType: (key: string) => string | null;
+        };
+      };
+
+      const originalHasRule = internalParser.ruleManager.hasRule.bind(internalParser.ruleManager);
+      const originalGetRuleType = internalParser.ruleManager.getRuleType.bind(internalParser.ruleManager);
+
+      internalParser.ruleManager.hasRule = (key: string) => key === 'mystery' ? true : originalHasRule(key);
+      internalParser.ruleManager.getRuleType = (key: string) => key === 'mystery' ? null : originalGetRuleType(key);
+
+      try {
+        const result = parser.calculateRuleComplexity('mystery');
+        expect(result.ruleType).toBe('unknown');
+        expect(result.complexity).toBe(1);
+        expect(result.warnings).toContain("Unknown rule type for 'mystery'");
+      } finally {
+        internalParser.ruleManager.hasRule = originalHasRule;
+        internalParser.ruleManager.getRuleType = originalGetRuleType;
+      }
+    });
+
+    it('should evaluate template variables via external rules when local values are missing', () => {
+      const internalParser = parser as unknown as {
+        ruleManager: {
+          hasRule: (key: string) => boolean;
+          getRuleType: (key: string) => string | null;
+          getTemplateRuleData: (key: string) => { template: string; variables: Record<string, string[]> } | null;
+          getGrammar: () => Record<string, string[]>;
+        };
+      };
+
+      const originalHasRule = internalParser.ruleManager.hasRule.bind(internalParser.ruleManager);
+      const originalGetRuleType = internalParser.ruleManager.getRuleType.bind(internalParser.ruleManager);
+      const originalGetTemplateRuleData = internalParser.ruleManager.getTemplateRuleData.bind(internalParser.ruleManager);
+      const originalGetGrammar = internalParser.ruleManager.getGrammar.bind(internalParser.ruleManager);
+
+      internalParser.ruleManager.hasRule = (key: string) => {
+        if (key === 'tmpl' || key === 'external') return true;
+        return originalHasRule(key);
+      };
+      internalParser.ruleManager.getRuleType = (key: string) => {
+        if (key === 'tmpl') return 'template';
+        if (key === 'external') return 'static';
+        return originalGetRuleType(key);
+      };
+      internalParser.ruleManager.getTemplateRuleData = (key: string) => {
+        if (key === 'tmpl') {
+          return {
+            template: '%external%',
+            variables: {}
+          };
+        }
+        return originalGetTemplateRuleData(key);
+      };
+      internalParser.ruleManager.getGrammar = () => ({
+        ...originalGetGrammar(),
+        external: ['one', 'two']
+      });
+
+      try {
+        const result = parser.calculateRuleComplexity('tmpl');
+        expect(result.complexity).toBe(2);
+        expect(result.variables).toContain('external');
+      } finally {
+        internalParser.ruleManager.hasRule = originalHasRule;
+        internalParser.ruleManager.getRuleType = originalGetRuleType;
+        internalParser.ruleManager.getTemplateRuleData = originalGetTemplateRuleData;
+        internalParser.ruleManager.getGrammar = originalGetGrammar;
+      }
+    });
+
+    it('returns infinite complexity when external template variable resolves to a function rule', () => {
+      const internalParser = parser as unknown as {
+        ruleManager: {
+          hasRule: (key: string) => boolean;
+          getRuleType: (key: string) => string | null;
+          getTemplateRuleData: (key: string) => { template: string; variables: Record<string, string[]> } | null;
+        };
+      };
+
+      const originalHasRule = internalParser.ruleManager.hasRule.bind(internalParser.ruleManager);
+      const originalGetRuleType = internalParser.ruleManager.getRuleType.bind(internalParser.ruleManager);
+      const originalGetTemplateRuleData = internalParser.ruleManager.getTemplateRuleData.bind(internalParser.ruleManager);
+
+      internalParser.ruleManager.hasRule = (key: string) => {
+        if (key === 'tmpl' || key === 'dynamicExternal') return true;
+        return originalHasRule(key);
+      };
+      internalParser.ruleManager.getRuleType = (key: string) => {
+        if (key === 'tmpl') return 'template';
+        if (key === 'dynamicExternal') return 'function';
+        return originalGetRuleType(key);
+      };
+      internalParser.ruleManager.getTemplateRuleData = (key: string) => {
+        if (key === 'tmpl') {
+          return {
+            template: '%dynamicExternal%',
+            variables: {}
+          };
+        }
+        return originalGetTemplateRuleData(key);
+      };
+
+      try {
+        const result = parser.calculateRuleComplexity('tmpl');
+        expect(result.complexity).toBe(Number.POSITIVE_INFINITY);
+      } finally {
+        internalParser.ruleManager.hasRule = originalHasRule;
+        internalParser.ruleManager.getRuleType = originalGetRuleType;
+        internalParser.ruleManager.getTemplateRuleData = originalGetTemplateRuleData;
+      }
+    });
+
+    it('warns for missing external template variables when local values are absent', () => {
+      const internalParser = parser as unknown as {
+        ruleManager: {
+          hasRule: (key: string) => boolean;
+          getRuleType: (key: string) => string | null;
+          getTemplateRuleData: (key: string) => { template: string; variables: Record<string, string[]> } | null;
+        };
+      };
+
+      const originalHasRule = internalParser.ruleManager.hasRule.bind(internalParser.ruleManager);
+      const originalGetRuleType = internalParser.ruleManager.getRuleType.bind(internalParser.ruleManager);
+      const originalGetTemplateRuleData = internalParser.ruleManager.getTemplateRuleData.bind(internalParser.ruleManager);
+
+      internalParser.ruleManager.hasRule = (key: string) => key === 'tmpl' ? true : originalHasRule(key);
+      internalParser.ruleManager.getRuleType = (key: string) => key === 'tmpl' ? 'template' : originalGetRuleType(key);
+      internalParser.ruleManager.getTemplateRuleData = (key: string) => {
+        if (key === 'tmpl') {
+          return {
+            template: '%neverDefined%',
+            variables: {}
+          };
+        }
+        return originalGetTemplateRuleData(key);
+      };
+
+      try {
+        const result = parser.calculateRuleComplexity('tmpl');
+        expect(result.complexity).toBe(1);
+        expect(result.warnings).toContain("Missing rule 'neverDefined' referenced in 'tmpl'");
+      } finally {
+        internalParser.ruleManager.hasRule = originalHasRule;
+        internalParser.ruleManager.getRuleType = originalGetRuleType;
+        internalParser.ruleManager.getTemplateRuleData = originalGetTemplateRuleData;
+      }
+    });
   });
 
   describe('calculateTotalComplexity', () => {
@@ -270,6 +432,41 @@ describe('Complexity Calculation', () => {
       expect(result.mostComplexRules).toEqual([]);
     });
 
+    it('should handle per-rule complexity calculation errors in total analysis', () => {
+      parser.addRule('ok', ['value']);
+
+      const internalParser = parser as unknown as {
+        complexityAnalyzer: {
+          calculateRuleComplexity: (ruleKey: string, visited?: Set<string>, maxDepth?: number) => unknown;
+        };
+        ruleManager: {
+          getAllKeys: () => string[];
+        };
+      };
+
+      const originalCalculateRuleComplexity = internalParser.complexityAnalyzer.calculateRuleComplexity.bind(internalParser.complexityAnalyzer);
+      const originalGetAllKeys = internalParser.ruleManager.getAllKeys.bind(internalParser.ruleManager);
+
+      internalParser.ruleManager.getAllKeys = () => ['ok', 'bad'];
+      internalParser.complexityAnalyzer.calculateRuleComplexity = (ruleKey: string) => {
+        if (ruleKey === 'bad') {
+          throw new Error('forced failure');
+        }
+        return originalCalculateRuleComplexity(ruleKey);
+      };
+
+      try {
+        const result = parser.calculateTotalComplexity();
+        expect(result.ruleCount).toBe(2);
+        const badRule = result.complexityByRule.find(r => r.ruleName === 'bad');
+        expect(badRule?.ruleType).toBe('error');
+        expect(result.warnings.some(w => w.includes("Error calculating complexity for rule 'bad'"))).toBe(true);
+      } finally {
+        internalParser.complexityAnalyzer.calculateRuleComplexity = originalCalculateRuleComplexity;
+        internalParser.ruleManager.getAllKeys = originalGetAllKeys;
+      }
+    });
+
     it('should handle template rules with local variables only', () => {
       parser.addTemplateRule('item', {
         template: '%color% %type%',
@@ -319,6 +516,50 @@ describe('Complexity Calculation', () => {
       
       const missingWarnings = result.warnings.filter(w => w.includes('missing'));
       expect(missingWarnings.length).toBe(2); // One for each broken rule
+    });
+
+    it('should warn when template local variable references a visited rule', () => {
+      parser.addRule('adjective', ['bright']);
+      parser.addTemplateRule('item', {
+        template: '%slot%',
+        variables: {
+          slot: ['%adjective%']
+        }
+      });
+
+      const result = parser.calculateRuleComplexity('item', new Set(['adjective']), 50);
+
+      expect(result.complexity).toBe(1);
+      expect(result.warnings).toContain("Circular reference detected for rule 'adjective'");
+    });
+
+    it('should warn when template local nested variable hits max depth', () => {
+      parser.addRule('adjective', ['bright']);
+      parser.addTemplateRule('item', {
+        template: '%slot%',
+        variables: {
+          slot: ['%adjective%']
+        }
+      });
+
+      const result = parser.calculateRuleComplexity('item', new Set(['seed']), 1);
+
+      expect(result.complexity).toBe(1);
+      expect(result.warnings.some(w => w.includes('Maximum depth (1) reached'))).toBe(true);
+    });
+
+    it('should warn when template local variables contain nested missing references', () => {
+      parser.addTemplateRule('item', {
+        template: '%local%',
+        variables: {
+          local: ['%nestedMissing%']
+        }
+      });
+
+      const result = parser.calculateRuleComplexity('item');
+
+      expect(result.complexity).toBe(1);
+      expect(result.warnings).toContain("Missing rule 'nestedMissing' referenced in 'item'");
     });
   });
 });

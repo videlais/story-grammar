@@ -369,5 +369,87 @@ describe('Probability Analysis', () => {
       const missingWarnings = result.warnings.filter(w => w.includes('missing'));
       expect(missingWarnings.length).toBeGreaterThan(0);
     });
+
+    it('should cap nested expansion and warn when max outcomes are reached during expansion', () => {
+      parser.addRule('colors', ['red', 'blue', 'green']);
+      parser.addRule('animals', ['cat', 'dog', 'fox']);
+      parser.addRule('combo', ['%colors% %animals%']);
+
+      const result = parser.calculateProbabilities('combo', 50, 2);
+
+      expect(result.totalOutcomes).toBe(2);
+      expect(result.warnings.some(w => w.includes('Maximum outcomes (2) reached during expansion'))).toBe(true);
+    });
+
+    it('should mark dynamic function outcomes when referenced from another rule', () => {
+      parser.addFunctionRule('dynamic', () => ['a', 'b']);
+      parser.addRule('wrapper', ['value:%dynamic%']);
+
+      const result = parser.calculateProbabilities('wrapper');
+
+      expect(result.totalOutcomes).toBe(1);
+      expect(result.outcomes[0].outcome).toContain('[function:dynamic]');
+      expect(result.warnings.some(w => w.includes("Function rule 'dynamic' has dynamic outcomes"))).toBe(true);
+    });
+
+    it('should expand remaining template variables from external rules', () => {
+      parser.addRule('shape', ['circle', 'square']);
+      parser.addTemplateRule('item', {
+        template: '%color%',
+        variables: {
+          color: ['red %shape%', 'blue %shape%']
+        }
+      });
+
+      const result = parser.calculateProbabilities('item');
+
+      expect(result.totalOutcomes).toBe(4);
+      const outcomes = result.outcomes.map(o => o.outcome);
+      expect(outcomes).toContain('red circle');
+      expect(outcomes).toContain('blue square');
+      const probabilitySum = result.outcomes.reduce((sum, outcome) => sum + outcome.probability, 0);
+      expect(probabilitySum).toBeCloseTo(1, 5);
+    });
+
+    it('should warn when conditional outcomes are truncated by maxOutcomes', () => {
+      parser.addConditionalRule('greeting', {
+        conditions: [
+          { default: ['hello', 'hi', 'hey'] }
+        ]
+      });
+
+      const result = parser.calculateProbabilities('greeting', 50, 1);
+
+      expect(result.totalOutcomes).toBe(1);
+      expect(result.warnings).toContain("Maximum outcomes (1) reached for rule 'greeting'");
+    });
+
+    it('returns base value when directly expanding with zero variables', () => {
+      const analyzer = (parser as unknown as { probabilityAnalyzer: unknown }).probabilityAnalyzer as {
+        expandVariablesWithProbabilities: (
+          value: string,
+          variables: string[],
+          baseProbability: number,
+          visited: Set<string>,
+          maxDepth: number,
+          maxOutcomes: number,
+          warnings: string[]
+        ) => Array<{ outcome: string; probability: number }>;
+      };
+
+      const outcomes = analyzer.expandVariablesWithProbabilities(
+        'literal',
+        [],
+        0.75,
+        new Set<string>(),
+        50,
+        100,
+        []
+      );
+
+      expect(outcomes).toHaveLength(1);
+      expect(outcomes[0].outcome).toBe('literal');
+      expect(outcomes[0].probability).toBe(0.75);
+    });
   });
 });
