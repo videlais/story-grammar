@@ -1,12 +1,9 @@
 name: CodeQL
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  schedule:
-    - cron: '23 2 * * 1'
+  # Default setup and advanced setup are mutually exclusive.
+  # Keep this workflow manual-only unless default setup is disabled.
+  workflow_dispatch:
 
 permissions:
   contents: read
