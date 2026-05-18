@@ -452,4 +452,234 @@ describe('Probability Analysis', () => {
       expect(outcomes[0].probability).toBe(0.75);
     });
   });
+
+  describe('Uncovered branch coverage', () => {
+    it('should skip zero-probability outcomes in entropy calculation', () => {
+      // A weighted rule with a 0-weight entry produces a 0-probability outcome,
+      // which exercises the `else return sum` branch in the entropy reducer (line ~80).
+      parser.addWeightedRule('r', ['common', 'zero'], [1, 0]);
+
+      const result = parser.calculateProbabilities('r');
+
+      // entropy of a single certain outcome = 0
+      expect(result.entropy).toBeCloseTo(0, 5);
+      const zeroOutcome = result.outcomes.find(o => o.outcome === 'zero');
+      expect(zeroOutcome?.probability).toBe(0);
+    });
+
+    it('should handle max-depth guard inside calculateRuleProbabilities directly', () => {
+      parser.addRule('target', ['value']);
+
+      const analyzer = (parser as unknown as {
+        probabilityAnalyzer: {
+          calculateRuleProbabilities: (
+            ruleKey: string,
+            visited: Set<string>,
+            maxDepth: number,
+            maxOutcomes: number,
+            warnings: string[]
+          ) => Array<{ outcome: string; probability: number }>;
+        };
+      }).probabilityAnalyzer;
+
+      const warnings: string[] = [];
+      // visited.size (1) >= maxDepth (1) triggers the depth guard
+      const outcomes = analyzer.calculateRuleProbabilities(
+        'target',
+        new Set(['seed']),
+        1,
+        100,
+        warnings
+      );
+
+      expect(outcomes).toHaveLength(1);
+      expect(warnings.some(w => w.includes('Maximum depth (1) reached'))).toBe(true);
+    });
+
+    it('should handle circular-reference guard inside calculateRuleProbabilities directly', () => {
+      parser.addRule('target', ['value']);
+
+      const analyzer = (parser as unknown as {
+        probabilityAnalyzer: {
+          calculateRuleProbabilities: (
+            ruleKey: string,
+            visited: Set<string>,
+            maxDepth: number,
+            maxOutcomes: number,
+            warnings: string[]
+          ) => Array<{ outcome: string; probability: number }>;
+        };
+      }).probabilityAnalyzer;
+
+      const warnings: string[] = [];
+      // visited already contains 'target' → triggers the circular guard
+      const outcomes = analyzer.calculateRuleProbabilities(
+        'target',
+        new Set(['target']),
+        50,
+        100,
+        warnings
+      );
+
+      expect(outcomes).toHaveLength(1);
+      expect(outcomes[0].outcome).toBe('target');
+      expect(warnings).toContain("Circular reference detected for rule 'target'");
+    });
+
+    it('should return a fallback result for unknown rule types in calculateRuleProbabilities', () => {
+      const internalParser = parser as unknown as {
+        ruleManager: {
+          hasRule: (key: string) => boolean;
+          getRuleType: (key: string) => string | null;
+          getAllKeys: () => string[];
+        };
+      };
+
+      const originalHasRule = internalParser.ruleManager.hasRule.bind(internalParser.ruleManager);
+      const originalGetRuleType = internalParser.ruleManager.getRuleType.bind(internalParser.ruleManager);
+
+      internalParser.ruleManager.hasRule = (key: string) =>
+        key === 'mystery' ? true : originalHasRule(key);
+      internalParser.ruleManager.getRuleType = (key: string) =>
+        key === 'mystery' ? null : originalGetRuleType(key);
+
+      try {
+        const result = parser.calculateProbabilities('mystery');
+        expect(result.totalOutcomes).toBe(1);
+        expect(result.outcomes[0].outcome).toBe('mystery');
+        expect(result.warnings).toContain("Unknown rule type for 'mystery'");
+      } finally {
+        internalParser.ruleManager.hasRule = originalHasRule;
+        internalParser.ruleManager.getRuleType = originalGetRuleType;
+      }
+    });
+
+    it('should truncate outcomes and warn when static rule hits maxOutcomes', () => {
+      parser.addRule('many', ['a', 'b', 'c', 'd']);
+
+      const result = parser.calculateProbabilities('many', 50, 2);
+
+      expect(result.totalOutcomes).toBe(2);
+      expect(result.warnings.some(w => w.includes("Maximum outcomes (2) reached for rule 'many'"))).toBe(true);
+    });
+
+    describe('weighted rule with variable values', () => {
+      it('should expand weighted values that contain variable references', () => {
+        parser.addRule('colors', ['red', 'blue']);
+        parser.addWeightedRule('item', ['%colors% sword', 'shield'], [0.6, 0.4]);
+
+        const result = parser.calculateProbabilities('item');
+
+        expect(result.totalOutcomes).toBe(3); // 2 colored swords + 1 shield
+        const redSword = result.outcomes.find(o => o.outcome === 'red sword');
+        expect(redSword?.probability).toBeCloseTo(0.3, 5); // 0.6 * 0.5
+      });
+
+      it('should truncate weighted outcomes and warn when maxOutcomes is reached', () => {
+        parser.addRule('many', Array.from({ length: 5 }, (_, i) => `v${i}`));
+        parser.addWeightedRule('w', ['%many%', '%many%'], [0.5, 0.5]);
+
+        const result = parser.calculateProbabilities('w', 50, 3);
+
+        expect(result.totalOutcomes).toBe(3);
+        expect(result.warnings.some(w => w.includes("Maximum outcomes (3) reached for rule 'w'"))).toBe(true);
+      });
+    });
+
+    it('should truncate template inner-loop outcomes and warn when maxOutcomes is reached', () => {
+      parser.addTemplateRule('item', {
+        template: '%color% %size%',
+        variables: {
+          color: ['red', 'blue', 'green'],
+          size: ['big', 'small', 'medium']
+        }
+      });
+
+      const result = parser.calculateProbabilities('item', 50, 4);
+
+      expect(result.totalOutcomes).toBe(4);
+      expect(result.warnings.some(w => w.includes("Maximum outcomes (4) reached for template rule 'item'"))).toBe(true);
+    });
+
+    it('should expand template remaining variables using external rules', () => {
+      // Use mock to produce a template where the final expanded string still
+      // has an unresolved %variable%, triggering the remaining-variables path.
+      parser.addRule('size', ['big', 'small']);
+
+      const internalParser = parser as unknown as {
+        ruleManager: {
+          hasRule: (key: string) => boolean;
+          getRuleType: (key: string) => string | null;
+          getTemplateRuleData: (key: string) => { template: string; variables: Record<string, string[]> } | null;
+        };
+      };
+
+      const originalHasRule = internalParser.ruleManager.hasRule.bind(internalParser.ruleManager);
+      const originalGetRuleType = internalParser.ruleManager.getRuleType.bind(internalParser.ruleManager);
+      const originalGetTemplateRuleData = internalParser.ruleManager.getTemplateRuleData.bind(internalParser.ruleManager);
+
+      // Template has %size% but it is NOT in the local variables object,
+      // so it survives the local-variable loop and lands in the remaining-variables block.
+      internalParser.ruleManager.hasRule = (key: string) =>
+        key === 'tmpl' ? true : originalHasRule(key);
+      internalParser.ruleManager.getRuleType = (key: string) =>
+        key === 'tmpl' ? 'template' : originalGetRuleType(key);
+      internalParser.ruleManager.getTemplateRuleData = (key: string) => {
+        if (key === 'tmpl') {
+          return { template: '%size%', variables: {} };
+        }
+        return originalGetTemplateRuleData(key);
+      };
+
+      try {
+        const result = parser.calculateProbabilities('tmpl');
+        const outcomes = result.outcomes.map(o => o.outcome);
+        expect(outcomes).toContain('big');
+        expect(outcomes).toContain('small');
+      } finally {
+        internalParser.ruleManager.hasRule = originalHasRule;
+        internalParser.ruleManager.getRuleType = originalGetRuleType;
+        internalParser.ruleManager.getTemplateRuleData = originalGetTemplateRuleData;
+      }
+    });
+
+    describe('sequential rule with variable values', () => {
+      it('should expand sequential values that contain variable references', () => {
+        parser.addRule('colors', ['red', 'blue']);
+        parser.addSequentialRule('steps', ['%colors% step', 'plain step']);
+
+        const result = parser.calculateProbabilities('steps');
+
+        expect(result.totalOutcomes).toBe(3); // 2 colored steps + 1 plain
+        const redStep = result.outcomes.find(o => o.outcome === 'red step');
+        expect(redStep).toBeDefined();
+      });
+
+      it('should truncate sequential outcomes and warn when maxOutcomes is reached', () => {
+        parser.addRule('colors', ['red', 'blue', 'green']);
+        parser.addSequentialRule('steps', ['%colors%', 'extra']);
+
+        const result = parser.calculateProbabilities('steps', 50, 2);
+
+        expect(result.totalOutcomes).toBe(2);
+        expect(result.warnings.some(w => w.includes("Maximum outcomes (2) reached for rule 'steps'"))).toBe(true);
+      });
+    });
+
+    it('should expand conditional values that contain variable references', () => {
+      parser.addRule('colors', ['red', 'blue']);
+      parser.addConditionalRule('greeting', {
+        conditions: [
+          { if: () => true, then: ['%colors% hello'] },
+          { default: ['plain hello'] }
+        ]
+      });
+
+      const result = parser.calculateProbabilities('greeting');
+
+      expect(result.totalOutcomes).toBe(3); // 2 colored hellos + 1 plain
+      const redHello = result.outcomes.find(o => o.outcome === 'red hello');
+      expect(redHello).toBeDefined();
+    });
+  });
 });

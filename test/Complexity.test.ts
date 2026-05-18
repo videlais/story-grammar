@@ -589,6 +589,16 @@ describe('Complexity Calculation', () => {
       expect(result.warnings).toEqual([]);
     });
 
+    it('should accept an explicit maxDepth argument', () => {
+      parser.addRule('colors', ['red', 'blue']);
+      parser.addRule('item', ['%colors% sword']);
+
+      const result = parser.calculateTotalComplexity(10);
+
+      expect(result.totalComplexity).toBe(4); // 2 + 2
+      expect(result.ruleCount).toBe(2);
+    });
+
     it('should calculate total complexity with interconnected rules', () => {
       parser.addRule('colors', ['red', 'blue']);
       parser.addRule('animals', ['cat', 'dog']);
@@ -802,6 +812,126 @@ describe('Complexity Calculation', () => {
 
       expect(result.complexity).toBe(1);
       expect(result.warnings).toContain("Missing rule 'nestedMissing' referenced in 'item'");
+    });
+  });
+
+  describe('Uncovered branch coverage', () => {
+    it('should propagate infinite complexity from function rule nested in a static rule', () => {
+      parser.addFunctionRule('dynamic', () => ['value']);
+      parser.addRule('sentence', ['I am %dynamic%']);
+
+      const result = parser.calculateRuleComplexity('sentence');
+
+      expect(result.complexity).toBe(Number.POSITIVE_INFINITY);
+    });
+
+    describe('weighted rule with variable references', () => {
+      it('should calculate complexity for weighted rules containing variables', () => {
+        parser.addRule('colors', ['red', 'blue', 'green']);
+        parser.addWeightedRule('item', ['%colors% sword', 'shield'], [0.7, 0.3]);
+
+        const result = parser.calculateRuleComplexity('item');
+
+        expect(result.complexity).toBe(4); // 3 colored swords + 1 literal shield
+        expect(result.ruleType).toBe('weighted');
+        expect(result.variables).toContain('colors');
+        expect(result.warnings).toEqual([]);
+      });
+
+      it('should propagate infinite complexity from a function rule nested in a weighted rule', () => {
+        parser.addFunctionRule('dynamic', () => ['x']);
+        parser.addWeightedRule('item', ['%dynamic%'], [1]);
+
+        const result = parser.calculateRuleComplexity('item');
+
+        expect(result.complexity).toBe(Number.POSITIVE_INFINITY);
+      });
+
+      it('should detect circular reference in nested weighted variable', () => {
+        parser.addWeightedRule('loop', ['%loop%'], [1]);
+
+        const result = parser.calculateRuleComplexity('loop');
+
+        expect(result.complexity).toBe(1);
+        expect(result.warnings).toContain("Circular reference detected for rule 'loop'");
+      });
+
+      it('should respect max depth in nested weighted variable', () => {
+        parser.addRule('child', ['value']);
+        parser.addWeightedRule('w', ['%child%'], [1]);
+
+        const result = parser.calculateRuleComplexity('w', new Set(), 1);
+
+        expect(result.complexity).toBe(1);
+        expect(result.warnings.some(w => w.includes('Maximum depth (1) reached while analyzing'))).toBe(true);
+      });
+
+      it('should warn for missing rule referenced in a weighted value', () => {
+        parser.addWeightedRule('item', ['%ghost%'], [1]);
+
+        const result = parser.calculateRuleComplexity('item');
+
+        expect(result.complexity).toBe(1);
+        expect(result.warnings).toContain("Missing rule 'ghost' referenced in 'item'");
+      });
+    });
+
+    describe('conditional rule nested-variable edge cases', () => {
+      it('should detect circular reference in nested conditional variable', () => {
+        parser.addConditionalRule('greeting', {
+          conditions: [{ if: () => true, then: ['%greeting%'] }]
+        });
+
+        const result = parser.calculateRuleComplexity('greeting');
+
+        expect(result.complexity).toBe(1);
+        expect(result.warnings).toContain("Circular reference detected for rule 'greeting'");
+      });
+
+      it('should respect max depth in nested conditional variable', () => {
+        parser.addRule('child', ['value']);
+        parser.addConditionalRule('greeting', {
+          conditions: [{ if: () => true, then: ['%child%'] }]
+        });
+
+        const result = parser.calculateRuleComplexity('greeting', new Set(), 1);
+
+        expect(result.complexity).toBe(1);
+        expect(result.warnings.some(w => w.includes('Maximum depth (1) reached while analyzing'))).toBe(true);
+      });
+    });
+
+    describe('sequential rule nested-variable edge cases', () => {
+      it('should detect circular reference in nested sequential variable', () => {
+        parser.addSequentialRule('steps', ['%steps%']);
+
+        const result = parser.calculateRuleComplexity('steps');
+
+        expect(result.complexity).toBe(1);
+        expect(result.warnings).toContain("Circular reference detected for rule 'steps'");
+      });
+
+      it('should respect max depth in nested sequential variable', () => {
+        parser.addRule('child', ['value']);
+        parser.addSequentialRule('steps', ['%child%']);
+
+        const result = parser.calculateRuleComplexity('steps', new Set(), 1);
+
+        expect(result.complexity).toBe(1);
+        expect(result.warnings.some(w => w.includes('Maximum depth (1) reached while analyzing'))).toBe(true);
+      });
+    });
+
+    it('should propagate infinite complexity from function rule referenced in template local values', () => {
+      parser.addFunctionRule('dynamic', () => ['x']);
+      parser.addTemplateRule('item', {
+        template: '%slot%',
+        variables: { slot: ['%dynamic%'] }
+      });
+
+      const result = parser.calculateRuleComplexity('item');
+
+      expect(result.complexity).toBe(Number.POSITIVE_INFINITY);
     });
   });
 });

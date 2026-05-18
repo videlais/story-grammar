@@ -1,6 +1,6 @@
 {
   "name": "story-grammar",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "A combinatorial grammar for narrative-based projects",
   "main": "dist/index.js",
   "types": "types/index.d.ts",
@@ -73,9 +73,9 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/jest": "^30.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.59.3",
-    "@typescript-eslint/parser": "^8.59.3",
-    "eslint": "^10.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.59.4",
+    "eslint": "^10.4.0",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.9",
     "ts-loader": "^9.5.7",
