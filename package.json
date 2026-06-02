@@ -82,6 +82,6 @@
     "ts-node": "^10.9.2",
     "typescript": "~6.0.3",
     "webpack": "^5.106.2",
-    "webpack-cli": "^7.0.2"
+    "webpack-cli": "^7.0.3"
   }
 }
