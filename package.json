@@ -78,7 +78,7 @@
     "eslint": "^10.4.0",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.9",
-    "ts-loader": "^9.5.7",
+    "ts-loader": "^9.6.0",
     "ts-node": "^10.9.2",
     "typescript": "~6.0.3",
     "webpack": "^5.106.2",
