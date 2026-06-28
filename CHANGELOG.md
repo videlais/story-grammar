@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.5] - 28 June 2026
+
+### Added
+
+- Documentation example links for the compatibility test page.
+- New "A History of Combinatorial Grammars" docs series (1850–2026) with era pages and academic references.
+
+### Changed
+
+- Updated dependencies (`@typescript-eslint`, `eslint`, `ts-loader`, `webpack`, `webpack-cli`).
+
+### Fixed
+
+- Resolved clean-URL routing for docs history pages via folder-based structure.
+
+### Security
+
+- Resolved all reported `npm audit` vulnerabilities, including pinning `js-yaml` via overrides.
+
 ## [1.2.4] - 27 March 2026
 
 ### Changed

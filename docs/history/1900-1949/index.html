@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1900–1949 · Chance &amp; Cut-Up — Story Grammar History</title>
+    <style>
+        body { font-family: 'Georgia', serif; max-width: 860px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); color: #333; line-height: 1.7; }
+        .container { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        h1 { color: #667eea; font-size: 2.3em; margin: 0 0 5px; }
+        h2 { color: #764ba2; margin-top: 36px; border-bottom: 2px solid #eee; padding-bottom: 6px; }
+        .era { font-style: italic; color: #777; margin-bottom: 24px; }
+        .nav { display: flex; justify-content: space-between; margin: 30px 0; font-size: .95em; }
+        .nav a, .back a { color: #667eea; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .refs { margin-top: 40px; padding-top: 20px; border-top: 3px solid #667eea; }
+        .refs ol { padding-left: 22px; }
+        .refs li { margin: 12px 0; font-size: .95em; }
+        sup { color: #764ba2; }
+        blockquote { border-left: 4px solid #c3cfe2; margin: 20px 0; padding: 6px 18px; color: #555; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="back"><a href="../">← History overview</a></div>
+        <h1>Chance &amp; Cut-Up, 1900–1949</h1>
+        <div class="era">Dada poems, the exquisite corpse, and the mathematics of text</div>
+
+        <p>
+            The early twentieth century split combinatorial writing into two streams that would later
+            converge in software: an avant-garde of <em>chance procedures</em> and a science of
+            <em>statistical language</em>. Both reduced authorship to a system of parts plus a rule
+            for combining them — exactly the model a grammar generator follows.
+        </p>
+
+        <h2>The Dadaist recipe</h2>
+        <p>
+            Tristan Tzara's "To Make a Dadaist Poem" (1920) is a literal generative algorithm: cut a
+            newspaper article into words, shake them in a bag, and copy them out "conscientiously" in the
+            order drawn.<sup>[1]</sup> The Surrealists' <em>cadavre exquis</em> formalized the same idea as a
+            collaborative slot-filling game, where each contributor supplies one grammatical part.<sup>[2]</sup>
+            These are random rule systems — the recreational ancestors of weighted production rules.
+        </p>
+        <blockquote>"The poem will resemble you." — Tristan Tzara, 1920</blockquote>
+
+        <h2>Markov and the statistics of letters</h2>
+        <p>
+            In 1913 Andrey Markov analyzed the sequence of vowels and consonants in Pushkin's
+            <em>Eugene Onegin</em>, founding the theory of chains in which each symbol's probability depends
+            on the previous one.<sup>[3]</sup> Markov chains remain the basis of the simplest text generators.
+        </p>
+
+        <h2>Information theory closes the era</h2>
+        <p>
+            Claude Shannon's "A Mathematical Theory of Communication" (1948) showed that English could be
+            approximated by sampling from n-gram statistics, producing eerily plausible nonsense and proving
+            language is partly predictable.<sup>[4]</sup> This bridged Tzara's chance and Markov's mathematics
+            into a single, computable model of text.
+        </p>
+
+        <div class="nav">
+            <a href="../1850-1899/">← 1850–1899</a>
+            <a href="../1950-1999/">Next: 1950–1999 →</a>
+        </div>
+
+        <div class="refs">
+            <h2>References</h2>
+            <ol>
+                <li>Tzara, Tristan. "Pour faire un poème dadaïste." 1920. In <em>Sept manifestes Dada</em>. Paris: Éditions du Diorama, 1924.</li>
+                <li>Breton, André, et al. "Le cadavre exquis." In <em>Le Surréalisme et la peinture.</em> Paris: Gallimard, 1928.</li>
+                <li>Markov, A. A. "An Example of Statistical Investigation of the Text Eugene Onegin Concerning the Connection of Samples in Chains." 1913. Trans. <em>Science in Context</em>, vol. 19, no. 4, 2006, pp. 591–600.</li>
+                <li>Shannon, Claude E. "A Mathematical Theory of Communication." <em>Bell System Technical Journal</em>, vol. 27, 1948, pp. 379–423, 623–656.</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

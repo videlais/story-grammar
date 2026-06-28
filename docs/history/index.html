@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A History of Combinatorial Grammars — Story Grammar</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+        }
+        h1 { color: #667eea; font-size: 2.6em; margin: 0; }
+        .header p { font-size: 1.2em; color: #555; margin: 10px 0; }
+        .subtitle { font-style: italic; color: #777; margin: 20px 0; font-size: 1.05em; }
+        .nav-top { margin-bottom: 20px; }
+        .nav-top a { color: #667eea; text-decoration: none; }
+        .nav-top a:hover { text-decoration: underline; }
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .example-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        .example-card:hover { transform: translateY(-5px); color: white; }
+        .example-title { font-size: 1.3em; font-weight: bold; margin-bottom: 12px; }
+        .example-description { font-size: 1em; line-height: 1.5; opacity: 0.95; }
+        .intro { margin-top: 20px; }
+        .intro p { margin: 12px 0; }
+        @media (max-width: 768px) { .examples-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-top"><a href="../index.html">← Back to Examples</a></div>
+        <div class="header">
+            <h1>📜 A History of Combinatorial Grammars</h1>
+            <p>Print Experiments &amp; Digital Projects, 1850–2026</p>
+            <div class="subtitle">
+                How writers, mathematicians, and programmers turned recombination into a literary form.
+            </div>
+        </div>
+
+        <div class="intro">
+            <p>
+                Combinatorial literature treats writing as a <em>system</em>: a small set of parts that
+                can be permuted into a vast number of texts. The modern grammar generators that power
+                tools like Story Grammar descend from a long lineage — from permutational verse and
+                mechanical print toys, through avant-garde chance procedures, formal mathematical
+                constraints, and finally software. The pages below trace that lineage across four eras,
+                each with academic references and citations.
+            </p>
+        </div>
+
+        <div class="examples-grid">
+            <a href="1850-1899/" class="example-card">
+                <div class="example-title">1850–1899 · Mechanical Verse</div>
+                <div class="example-description">
+                    Permutational print, proteus poems, the chance of the page, and the prehistory of the algorithm.
+                </div>
+            </a>
+            <a href="1900-1949/" class="example-card">
+                <div class="example-title">1900–1949 · Chance &amp; Cut-Up</div>
+                <div class="example-description">
+                    Dada poems, exquisite corpses, Markov chains, and Shannon's information theory.
+                </div>
+            </a>
+            <a href="1950-1999/" class="example-card">
+                <div class="example-title">1950–1999 · Oulipo &amp; the Computer</div>
+                <div class="example-description">
+                    Queneau's hundred thousand billion poems, Strachey's love letters, and computer poetry.
+                </div>
+            </a>
+            <a href="2000-2026/" class="example-card">
+                <div class="example-title">2000–2026 · The Open Web</div>
+                <div class="example-description">
+                    Tracery, NaNoGenMo, bots, and grammar engines — combinatorics for everyone.
+                </div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
