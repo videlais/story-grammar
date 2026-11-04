@@ -997,7 +997,7 @@ Parse with automatic error recovery and detailed diagnostics:
 ```typescript
 const result = parser.safeParse('%potentially_problematic%', {
   validateFirst: true,    // Validate rules before parsing
-  maxAttempts: 3,        // Retry with reduced complexity
+  maxAttempts: 3,        // Retry parsing up to three times
   preserveContext: false
 });
 
