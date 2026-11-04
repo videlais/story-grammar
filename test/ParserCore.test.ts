@@ -41,7 +41,7 @@ describe('ParserCore Comprehensive Coverage', () => {
       // Test negative weights
       expect(() => {
         parser.addWeightedRule('test', ['a'], [-0.5]);
-      }).toThrow('All weights must be non-negative numbers');
+      }).toThrow('All weights must be finite non-negative numbers');
 
       // Test weights not summing to 1.0
       expect(() => {
@@ -51,7 +51,7 @@ describe('ParserCore Comprehensive Coverage', () => {
       // Test non-number weights
       expect(() => {
         parser.addWeightedRule('test', ['a'], ['invalid' as any]);
-      }).toThrow('All weights must be non-negative numbers');
+      }).toThrow('All weights must be finite non-negative numbers');
     });
 
     it('should handle weighted rule management', () => {
@@ -292,11 +292,11 @@ describe('ParserCore Comprehensive Coverage', () => {
 
       expect(() => {
         parser.addRangeRule('test', { min: 'invalid' as any, max: 5, type: 'integer' });
-      }).toThrow('Min and max must be numbers');
+      }).toThrow('Min and max must be finite numbers');
 
       expect(() => {
         parser.addRangeRule('test', { min: 0, max: 5, step: -1, type: 'integer' });
-      }).toThrow('Step must be a positive number');
+      }).toThrow('Step must be a positive finite number');
 
       expect(() => {
         parser.addRangeRule('test', { min: 0, max: 5, type: 'invalid' as any });
@@ -454,6 +454,20 @@ describe('ParserCore Comprehensive Coverage', () => {
       expect(result.attempts).toBe(1);
     });
 
+    it('should not change max depth after safeParse retries fail', () => {
+      const rules: Grammar = {};
+      for (let i = 0; i < 80; i++) {
+        rules[`r${i}`] = [`%r${i + 1}%`];
+      }
+      rules.r80 = ['done'];
+      parser.addRules(rules);
+      parser.addRule('loop', ['%loop%']);
+
+      expect(parser.safeParse('%loop%', { validateFirst: false, maxAttempts: 2 }).success).toBe(false);
+      expect(parser.getMaxDepth()).toBe(100);
+      expect(parser.parse('%r0%')).toBe('done');
+    });
+
     it('should handle parseWithTiming', () => {
       parser.addRule('test', ['value']);
       
@@ -478,6 +492,15 @@ describe('ParserCore Comprehensive Coverage', () => {
       // Should be reproducible with same seed
       const variations2 = parser.generateVariations('%colors%', 5, 12345);
       expect(variations).toEqual(variations2);
+    });
+
+    it('should preserve seeded random state after generateVariations', () => {
+      parser.addRule('choices', ['a', 'b', 'c', 'd']);
+      parser.setRandomSeed(1);
+
+      expect(parser.parse('%choices%')).toBe('a');
+      parser.generateVariations('%choices%', 1, 999);
+      expect(parser.parse('%choices%')).toBe('b');
     });
 
     it('should handle generateVariations input validation', () => {

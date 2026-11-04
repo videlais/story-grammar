@@ -35,6 +35,21 @@ export class SeededRandom {
   }
 
   /**
+   * Run an operation while restoring the generator state afterward
+   */
+  public withPreservedState<T>(operation: () => T): T {
+    const seed = this.seed;
+    const currentSeed = this.currentSeed;
+
+    try {
+      return operation();
+    } finally {
+      this.seed = seed;
+      this.currentSeed = currentSeed;
+    }
+  }
+
+  /**
    * Generate a random number between 0 and 1
    * Uses LCG when seed is set, Math.random() otherwise
    * @returns Random number between 0 and 1

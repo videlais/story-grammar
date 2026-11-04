@@ -237,8 +237,8 @@ export class WeightedRuleManager extends BaseRuleManager<WeightedRule> {
     
     // Validate weights
     for (const weight of weights) {
-      if (typeof weight !== 'number' || weight < 0) {
-        throw new Error('All weights must be non-negative numbers');
+      if (typeof weight !== 'number' || !Number.isFinite(weight) || weight < 0) {
+        throw new Error('All weights must be finite non-negative numbers');
       }
     }
     

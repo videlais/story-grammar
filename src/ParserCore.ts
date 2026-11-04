@@ -326,11 +326,6 @@ export class Parser {
           };
         }
 
-        // For recursion errors, try reducing max depth
-        if (this.errorHandler['isRecursionError'](error as Error)) {
-          const currentDepth = this.variableExpander.getMaxDepth();
-          this.variableExpander.setMaxDepth(Math.max(10, Math.floor(currentDepth * 0.7)));
-        }
       }
     }
 
@@ -391,10 +386,8 @@ export class Parser {
       throw new Error('Count must be a positive integer');
     }
 
-    const variations: string[] = [];
-    const originalSeed = this.random.getSeed();
-
-    try {
+    return this.random.withPreservedState(() => {
+      const variations: string[] = [];
       for (let i = 0; i < count; i++) {
         if (seed !== undefined) {
           this.random.setSeed(seed + i);
@@ -403,14 +396,7 @@ export class Parser {
       }
 
       return variations;
-    } finally {
-      // Restore original seed state
-      if (originalSeed !== null) {
-        this.random.setSeed(originalSeed);
-      } else {
-        this.random.clearSeed();
-      }
-    }
+    });
   }
 
   // ==================== CONFIGURATION ====================

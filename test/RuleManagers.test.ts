@@ -86,7 +86,9 @@ describe('Base and Advanced Rule Managers', () => {
       expect(() => manager.addRule('k', ['a'], 'x' as unknown as number[])).toThrow('Rule weights must be an array');
       expect(() => manager.addRule('k', ['a', 'b'], [1])).toThrow('Values and weights arrays must have the same length');
       expect(() => manager.addRule('k', [], [])).toThrow('Values array cannot be empty');
-      expect(() => manager.addRule('k', ['a'], [-1])).toThrow('All weights must be non-negative numbers');
+      expect(() => manager.addRule('k', ['a'], [-1])).toThrow('All weights must be finite non-negative numbers');
+      expect(() => manager.addRule('k', ['a'], [NaN])).toThrow('All weights must be finite non-negative numbers');
+      expect(() => manager.addRule('k', ['a'], [Infinity])).toThrow('All weights must be finite non-negative numbers');
       expect(() => manager.addRule('k', ['a', 'b'], [0.2, 0.2])).toThrow('Weights must sum to 1.0, got 0.4');
     });
 
@@ -183,9 +185,13 @@ describe('Base and Advanced Rule Managers', () => {
     it('validates range inputs', () => {
       const manager = new RangeRuleManager();
       expect(() => manager.addRule('', { min: 1, max: 2, type: 'integer' })).toThrow('Key must be a non-empty string');
-      expect(() => manager.addRule('k', { min: '1' as unknown as number, max: 2, type: 'integer' })).toThrow('Min and max must be numbers');
+      expect(() => manager.addRule('k', { min: '1' as unknown as number, max: 2, type: 'integer' })).toThrow('Min and max must be finite numbers');
+      expect(() => manager.addRule('k', { min: NaN, max: 2, type: 'integer' })).toThrow('Min and max must be finite numbers');
+      expect(() => manager.addRule('k', { min: 1, max: Infinity, type: 'integer' })).toThrow('Min and max must be finite numbers');
       expect(() => manager.addRule('k', { min: 2, max: 1, type: 'integer' })).toThrow('Min must be less than max');
-      expect(() => manager.addRule('k', { min: 1, max: 2, step: 0, type: 'integer' })).toThrow('Step must be a positive number');
+      expect(() => manager.addRule('k', { min: 1, max: 2, step: 0, type: 'integer' })).toThrow('Step must be a positive finite number');
+      expect(() => manager.addRule('k', { min: 1, max: 2, step: NaN, type: 'integer' })).toThrow('Step must be a positive finite number');
+      expect(() => manager.addRule('k', { min: 1, max: 2, step: Infinity, type: 'integer' })).toThrow('Step must be a positive finite number');
       expect(() => manager.addRule('k', { min: 1, max: 2, type: 'invalid' as unknown as 'integer' | 'float' })).toThrow('Type must be "integer" or "float"');
     });
 
