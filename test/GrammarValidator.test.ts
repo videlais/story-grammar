@@ -104,6 +104,13 @@ describe('GrammarValidator', () => {
     expect(new Set(expander.findCircularReferences())).toEqual(new Set(['a', 'b', 'c', 'd']));
   });
 
+  it('limits scoped cycle analysis to rules reachable from the start rule', () => {
+    ruleManager.addRule('parent', ['%leaf%']);
+    ruleManager.addRule('leaf', ['done']);
+
+    expect(expander.findCircularReferences('leaf')).toEqual([]);
+  });
+
   it('handles long dependency paths without recursive traversal', () => {
     const depth = 12_000;
     for (let index = 0; index < depth; index++) {

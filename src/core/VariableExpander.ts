@@ -222,7 +222,7 @@ export class VariableExpander {
         const rule = stack.pop()!;
         component.push(rule);
         for (const dependency of reverseGraph.get(rule) ?? []) {
-          if (!assigned.has(dependency)) {
+          if (reachable.has(dependency) && !assigned.has(dependency)) {
             assigned.add(dependency);
             stack.push(dependency);
           }
