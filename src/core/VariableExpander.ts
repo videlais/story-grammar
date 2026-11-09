@@ -159,6 +159,11 @@ export class VariableExpander {
   public findCircularReferences(startRule?: string, visited: Set<string> = new Set()): string[] {
     const allKeys = this.ruleManager.getAllKeys();
     const graph = new Map<string, string[]>();
+    const reverseGraph = new Map<string, string[]>();
+    for (const key of allKeys) {
+      reverseGraph.set(key, []);
+    }
+
     for (const key of allKeys) {
       const dependencies = new Set<string>();
       for (const value of this.ruleManager.getPossibleValues(key)) {
@@ -168,47 +173,67 @@ export class VariableExpander {
           }
         }
       }
-      graph.set(key, Array.from(dependencies));
-    }
-
-    const active = new Map<string, number>();
-    const complete = new Set<string>();
-    const path: string[] = [];
-    const circular = new Set<string>();
-
-    if (startRule) {
-      for (const rule of visited) {
-        active.set(rule, path.length);
-        path.push(rule);
+      const edges = Array.from(dependencies);
+      graph.set(key, edges);
+      for (const dependency of edges) {
+        reverseGraph.get(dependency)?.push(key);
       }
     }
 
-    const visit = (rule: string): void => {
-      const activeIndex = active.get(rule);
-      if (activeIndex !== undefined) {
-        for (const member of path.slice(activeIndex)) {
-          circular.add(member);
+    // Keep the legacy parameter for callers; SCC detection derives cycles from the graph.
+    void visited;
+    const roots = startRule ? [startRule] : allKeys;
+    const reachable = new Set<string>();
+    const order: string[] = [];
+    for (const root of roots) {
+      if (reachable.has(root)) {
+        continue;
+      }
+      reachable.add(root);
+      const stack = [{ rule: root, nextDependency: 0 }];
+      while (stack.length > 0) {
+        const current = stack[stack.length - 1];
+        const dependencies = graph.get(current.rule) ?? [];
+        if (current.nextDependency < dependencies.length) {
+          const dependency = dependencies[current.nextDependency++];
+          if (!reachable.has(dependency)) {
+            reachable.add(dependency);
+            stack.push({ rule: dependency, nextDependency: 0 });
+          }
+        } else {
+          order.push(current.rule);
+          stack.pop();
         }
-        return;
       }
-      if (complete.has(rule)) {
-        return;
-      }
-
-      active.set(rule, path.length);
-      path.push(rule);
-      for (const dependency of graph.get(rule) ?? []) {
-        visit(dependency);
-      }
-      path.pop();
-      active.delete(rule);
-      complete.add(rule);
-    };
-
-    for (const rule of startRule ? [startRule] : allKeys) {
-      visit(rule);
     }
 
-    return Array.from(circular);
+    const assigned = new Set<string>();
+    const circular: string[] = [];
+    for (let index = order.length - 1; index >= 0; index--) {
+      const root = order[index];
+      if (assigned.has(root)) {
+        continue;
+      }
+
+      const component: string[] = [];
+      const stack = [root];
+      assigned.add(root);
+      while (stack.length > 0) {
+        const rule = stack.pop()!;
+        component.push(rule);
+        for (const dependency of reverseGraph.get(rule) ?? []) {
+          if (!assigned.has(dependency)) {
+            assigned.add(dependency);
+            stack.push(dependency);
+          }
+        }
+      }
+
+      if (component.length > 1 || (graph.get(root) ?? []).includes(root)) {
+        circular.push(...component);
+      }
+    }
+
+    return circular;
   }
 }

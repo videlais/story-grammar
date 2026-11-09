@@ -80,6 +80,19 @@ describe('RuleManager', () => {
     );
   });
 
+  it('uses literal template tokens consistently for generation and analysis', () => {
+    manager.addTemplateRule('template', {
+      template: '%a.b% %axb%',
+      variables: {
+        'a.b': ['left'],
+        axb: ['%loop%']
+      }
+    });
+
+    expect(manager.getPossibleValues('template')).toEqual(['left %loop%']);
+    expect(manager.generateValue('template', {}, random)).toBe('left %loop%');
+  });
+
   it('removes a key from all matching rule types', () => {
     manager.addRule('shared', ['static']);
     manager.addWeightedRule('shared', ['weighted'], [1]);

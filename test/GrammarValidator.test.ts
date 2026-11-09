@@ -95,6 +95,25 @@ describe('GrammarValidator', () => {
     expect(getPossibleValues).toHaveBeenCalledTimes(25);
   });
 
+  it('reports every rule in a cyclic dependency component', () => {
+    ruleManager.addRule('a', ['%b%']);
+    ruleManager.addRule('b', ['%c%', '%d%']);
+    ruleManager.addRule('c', ['%a%', '%b%']);
+    ruleManager.addRule('d', ['%c%']);
+
+    expect(new Set(expander.findCircularReferences())).toEqual(new Set(['a', 'b', 'c', 'd']));
+  });
+
+  it('handles long dependency paths without recursive traversal', () => {
+    const depth = 12_000;
+    for (let index = 0; index < depth; index++) {
+      ruleManager.addRule(`r${index}`, [`%r${index + 1}%`]);
+    }
+    ruleManager.addRule(`r${depth}`, ['done']);
+
+    expect(expander.findCircularReferences()).toEqual([]);
+  });
+
   it('reports invalid grammar details and truncates long unreachable lists', () => {
     ruleManager.addRule('start', ['%missing%']);
     ruleManager.addRule('loopA', ['%loopB%']);

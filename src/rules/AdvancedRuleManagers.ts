@@ -297,7 +297,8 @@ export class TemplateRuleManager extends BaseRuleManager<TemplateRule> {
       const values = rule.variables[variable];
       if (values && values.length > 0) {
         const value = random.randomChoice(values);
-        result = result.replace(new RegExp(`%${variable}%`, 'g'), value);
+        const token = `%${variable}%`;
+        result = result.split(token).join(value);
       }
     }
     
