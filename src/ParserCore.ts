@@ -327,11 +327,23 @@ export class Parser {
           };
         }
         if (attempts >= maxAttempts) {
-          return {
-            success: false,
-            error: this.errorHandler.getHelpfulError(error as Error, { text }),
-            attempts
-          };
+          const parseError = error instanceof Error ? error : new Error(String(error));
+          try {
+            return {
+              success: false,
+              error: this.errorHandler.getHelpfulError(parseError, { text }),
+              attempts
+            };
+          } catch (diagnosticError) {
+            const diagnosticMessage = diagnosticError instanceof Error
+              ? diagnosticError.message
+              : String(diagnosticError);
+            return {
+              success: false,
+              error: `${parseError.message}\n\nError diagnostics unavailable: ${diagnosticMessage}`,
+              attempts
+            };
+          }
         }
 
       }
