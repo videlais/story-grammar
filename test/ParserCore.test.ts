@@ -465,6 +465,16 @@ describe('ParserCore Comprehensive Coverage', () => {
       expect(parser.parse('%sequence%')).toBe('second');
     });
 
+    it('should ignore zero-weight recursive alternatives during safeParse validation', () => {
+      parser.addWeightedRule('weighted', ['ok', '%weighted%'], [1, 0]);
+
+      expect(parser.safeParse('%weighted%')).toMatchObject({
+        success: true,
+        result: 'ok',
+        attempts: 1
+      });
+    });
+
     it('should not change max depth after safeParse retries fail', () => {
       const rules: Grammar = {};
       for (let i = 0; i < 80; i++) {

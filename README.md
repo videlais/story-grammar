@@ -494,7 +494,7 @@ if (!validation.isValid) {
 }
 ```
 
-Circular-reference validation inspects rule values known without executing them. It can analyze static, weighted, conditional, sequential, and template values, but cannot infer references generated dynamically by function rules.
+Circular-reference validation checks statically reachable outputs for static, positive-weight, conditional, sequential, and template rules without executing user-defined function rules. Template references are analyzed after slot substitution, and shared dependencies are checked once.
 
 ### Complexity Analysis
 

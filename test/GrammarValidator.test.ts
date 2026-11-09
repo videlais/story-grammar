@@ -6,10 +6,11 @@ import { SeededRandom } from '../src/utils/SeededRandom';
 describe('GrammarValidator', () => {
   let ruleManager: RuleManager;
   let validator: GrammarValidator;
+  let expander: VariableExpander;
 
   beforeEach(() => {
     ruleManager = new RuleManager();
-    const expander = new VariableExpander(ruleManager, new SeededRandom());
+    expander = new VariableExpander(ruleManager, new SeededRandom());
     validator = new GrammarValidator(ruleManager, expander);
   });
 
@@ -55,6 +56,43 @@ describe('GrammarValidator', () => {
 
     expect(result.circularReferences).toContain('weighted');
     expect(result.circularReferences).toContain('conditional');
+  });
+
+  it('does not report zero-weight alternatives as cycles', () => {
+    ruleManager.addWeightedRule('weighted', ['ok', '%weighted%'], [1, 0]);
+
+    expect(validator.validate().circularReferences).not.toContain('weighted');
+  });
+
+  it('analyzes templates after substituting only referenced slots', () => {
+    ruleManager.addTemplateRule('unusedTemplate', {
+      template: 'ok',
+      variables: { unused: ['%unusedLoop%'] }
+    });
+    ruleManager.addRule('unusedLoop', ['ok']);
+    ruleManager.addTemplateRule('wrappedTemplate', {
+      template: '%%slot%%',
+      variables: { slot: ['loop'] }
+    });
+    ruleManager.addRule('loop', ['%wrappedTemplate%']);
+
+    const result = validator.validate();
+
+    expect(result.circularReferences).not.toContain('unusedLoop');
+    expect(result.circularReferences).toContain('wrappedTemplate');
+    expect(result.circularReferences).toContain('loop');
+  });
+
+  it('checks each shared dependency once when building the cycle graph', () => {
+    for (let index = 0; index < 24; index++) {
+      const next = `r${index + 1}`;
+      ruleManager.addRule(`r${index}`, [`%${next}%`, `%${next}%`]);
+    }
+    ruleManager.addRule('r24', ['done']);
+    const getPossibleValues = jest.spyOn(ruleManager, 'getPossibleValues');
+
+    expect(expander.findCircularReferences()).toEqual([]);
+    expect(getPossibleValues).toHaveBeenCalledTimes(25);
   });
 
   it('reports invalid grammar details and truncates long unreachable lists', () => {

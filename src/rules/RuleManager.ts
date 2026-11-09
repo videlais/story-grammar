@@ -200,21 +200,55 @@ export class RuleManager {
     switch (this.getRuleType(key)) {
       case 'static':
         return this.staticRules.getRule(key) ?? [];
-      case 'weighted':
-        return this.weightedRules.getRuleData(key)?.values ?? [];
-      case 'conditional':
-        return this.conditionalRules.getRuleData(key)?.conditions.flatMap(condition =>
-          condition.default ?? condition.then ?? []
-        ) ?? [];
+      case 'weighted': {
+        const rule = this.weightedRules.getRuleData(key);
+        return rule?.values.filter((_, index) => rule.weights[index] > 0) ?? [];
+      }
+      case 'conditional': {
+        const conditions = this.conditionalRules.getRuleData(key)?.conditions ?? [];
+        const values: string[] = [];
+        for (const condition of conditions) {
+          values.push(...(condition.default ?? condition.then ?? []));
+          if (condition.default) {
+            break;
+          }
+        }
+        return values;
+      }
       case 'sequential':
         return this.sequentialRules.getRuleData(key)?.values ?? [];
       case 'template': {
         const rule = this.templateRules.getRuleData(key);
-        return rule ? Object.values(rule.variables).flat() : [];
+        if (!rule) {
+          return [];
+        }
+
+        const variables = this.findVariables(rule.template);
+        let outputs = new Set([rule.template]);
+        for (const variable of variables) {
+          const token = `%${variable}%`;
+          const values = rule.variables[variable] ?? [];
+          const nextOutputs = new Set<string>();
+          for (const output of outputs) {
+            if (!output.includes(token)) {
+              nextOutputs.add(output);
+              continue;
+            }
+            for (const value of values) {
+              nextOutputs.add(output.split(token).join(value));
+            }
+          }
+          outputs = nextOutputs;
+        }
+        return Array.from(outputs);
       }
       default:
         return [];
     }
+  }
+
+  private findVariables(text: string): string[] {
+    return Array.from(new Set(Array.from(text.matchAll(/%([^%]+)%/g), match => match[1])));
   }
 
   /**

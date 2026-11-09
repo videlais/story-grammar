@@ -157,48 +157,58 @@ export class VariableExpander {
    * @returns Array of circular reference chains found
    */
   public findCircularReferences(startRule?: string, visited: Set<string> = new Set()): string[] {
-    const circular: string[] = [];
-    
-    if (startRule) {
-      this.checkRuleForCircularReferences(startRule, visited, circular);
-    } else {
-      // Check all rules
-      const allKeys = this.ruleManager.getAllKeys();
-      for (const key of allKeys) {
-        this.checkRuleForCircularReferences(key, new Set(), circular);
-      }
-    }
-    
-    return circular;
-  }
-
-  /**
-   * Check a specific rule for circular references
-   * @private
-   */
-  private checkRuleForCircularReferences(
-    ruleName: string, 
-    visited: Set<string>, 
-    circular: string[]
-  ): void {
-    if (visited.has(ruleName)) {
-      circular.push(ruleName);
-      return;
-    }
-    
-    visited.add(ruleName);
-    
-    // Inspect known rule values without executing stateful or user-defined rules.
-    const possibleValues = this.ruleManager.getPossibleValues(ruleName);
-    for (const value of possibleValues) {
-      const variables = this.findVariables(value);
-      for (const variable of variables) {
-        if (!variable.startsWith('@') && this.ruleManager.hasRule(variable)) {
-          this.checkRuleForCircularReferences(variable, new Set(visited), circular);
+    const allKeys = this.ruleManager.getAllKeys();
+    const graph = new Map<string, string[]>();
+    for (const key of allKeys) {
+      const dependencies = new Set<string>();
+      for (const value of this.ruleManager.getPossibleValues(key)) {
+        for (const variable of this.findVariables(value)) {
+          if (!variable.startsWith('@') && this.ruleManager.hasRule(variable)) {
+            dependencies.add(variable);
+          }
         }
       }
+      graph.set(key, Array.from(dependencies));
     }
-    
-    visited.delete(ruleName);
+
+    const active = new Map<string, number>();
+    const complete = new Set<string>();
+    const path: string[] = [];
+    const circular = new Set<string>();
+
+    if (startRule) {
+      for (const rule of visited) {
+        active.set(rule, path.length);
+        path.push(rule);
+      }
+    }
+
+    const visit = (rule: string): void => {
+      const activeIndex = active.get(rule);
+      if (activeIndex !== undefined) {
+        for (const member of path.slice(activeIndex)) {
+          circular.add(member);
+        }
+        return;
+      }
+      if (complete.has(rule)) {
+        return;
+      }
+
+      active.set(rule, path.length);
+      path.push(rule);
+      for (const dependency of graph.get(rule) ?? []) {
+        visit(dependency);
+      }
+      path.pop();
+      active.delete(rule);
+      complete.add(rule);
+    };
+
+    for (const rule of startRule ? [startRule] : allKeys) {
+      visit(rule);
+    }
+
+    return Array.from(circular);
   }
 }
