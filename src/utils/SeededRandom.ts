@@ -106,12 +106,18 @@ export class SeededRandom {
     
     // Find the first cumulative weight that is greater than our random number
     for (let i = 0; i < cumulativeWeights.length; i++) {
-      if (random <= cumulativeWeights[i]) {
+      if (random < cumulativeWeights[i]) {
         return values[i];
       }
     }
     
-    // Fallback to last value (should not happen with proper weights)
+    for (let i = cumulativeWeights.length - 1; i >= 0; i--) {
+      const previousWeight = i === 0 ? 0 : cumulativeWeights[i - 1];
+      if (cumulativeWeights[i] > previousWeight) {
+        return values[i];
+      }
+    }
+
     return values[values.length - 1];
   }
 }

@@ -454,6 +454,68 @@ describe('ParserCore Comprehensive Coverage', () => {
       expect(result.attempts).toBe(1);
     });
 
+    it('should not consume sequential values during safeParse validation', () => {
+      parser.addSequentialRule('sequence', ['first', 'second']);
+
+      expect(parser.safeParse('%sequence%')).toMatchObject({
+        success: true,
+        result: 'first',
+        attempts: 1
+      });
+      expect(parser.parse('%sequence%')).toBe('second');
+    });
+
+    it('should ignore zero-weight recursive alternatives during safeParse validation', () => {
+      parser.addWeightedRule('weighted', ['ok', '%weighted%'], [1, 0]);
+
+      expect(parser.safeParse('%weighted%')).toMatchObject({
+        success: true,
+        result: 'ok',
+        attempts: 1
+      });
+    });
+
+    it('should report template analysis limits instead of retrying without validation', () => {
+      const choices = Array.from({ length: 10 }, (_, index) => String(index));
+      const variables = Object.fromEntries(
+        'abcdefgh'.split('').map(variable => [variable, choices])
+      );
+      parser.addTemplateRule('largeTemplate', {
+        template: '%a%%b%%c%%d%%e%%f%%g%%h%',
+        variables
+      });
+
+      const result = parser.safeParse('hello');
+
+      expect(result).toMatchObject({
+        success: false,
+        attempts: 1
+      });
+      expect(result.error).toContain('analysis limit of 10000 outputs');
+    });
+
+    it('should preserve parse errors when helpful diagnostics fail', () => {
+      const choices = Array.from({ length: 10 }, (_, index) => String(index));
+      const variables = Object.fromEntries(
+        'abcdefgh'.split('').map(variable => [variable, choices])
+      );
+      parser.addTemplateRule('largeTemplate', {
+        template: '%a%%b%%c%%d%%e%%f%%g%%h%',
+        variables
+      });
+      parser.addFunctionRule('broken', () => {
+        throw new Error('function rule failed');
+      });
+
+      const result = parser.safeParse('%broken%', { validateFirst: false, maxAttempts: 1 });
+
+      expect(result.success).toBe(false);
+      expect(result.attempts).toBe(1);
+      expect(result.error).toContain("Error executing function rule 'broken': function rule failed");
+      expect(result.error).toContain('Error diagnostics unavailable');
+      expect(result.error).toContain('analysis limit of 10000 outputs');
+    });
+
     it('should not change max depth after safeParse retries fail', () => {
       const rules: Grammar = {};
       for (let i = 0; i < 80; i++) {
@@ -684,6 +746,12 @@ describe('ParserCore Comprehensive Coverage', () => {
     it('should handle setMaxDepth validation', () => {
       expect(() => {
         parser.setMaxDepth(0);
+      }).toThrow('Max depth must be at least 1');
+      expect(() => {
+        parser.setMaxDepth(Number.NaN);
+      }).toThrow('Max depth must be at least 1');
+      expect(() => {
+        parser.setMaxDepth(Infinity);
       }).toThrow('Max depth must be at least 1');
     });
 

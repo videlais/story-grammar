@@ -189,9 +189,11 @@ describe('Base and Advanced Rule Managers', () => {
       expect(() => manager.addRule('k', { min: NaN, max: 2, type: 'integer' })).toThrow('Min and max must be finite numbers');
       expect(() => manager.addRule('k', { min: 1, max: Infinity, type: 'integer' })).toThrow('Min and max must be finite numbers');
       expect(() => manager.addRule('k', { min: 2, max: 1, type: 'integer' })).toThrow('Min must be less than max');
+      expect(() => manager.addRule('k', { min: -Number.MAX_VALUE, max: Number.MAX_VALUE, type: 'float' })).toThrow('Range span must be finite');
       expect(() => manager.addRule('k', { min: 1, max: 2, step: 0, type: 'integer' })).toThrow('Step must be a positive finite number');
       expect(() => manager.addRule('k', { min: 1, max: 2, step: NaN, type: 'integer' })).toThrow('Step must be a positive finite number');
       expect(() => manager.addRule('k', { min: 1, max: 2, step: Infinity, type: 'integer' })).toThrow('Step must be a positive finite number');
+      expect(() => manager.addRule('k', { min: 1, max: 2, step: Number.MIN_VALUE, type: 'float' })).toThrow('Range step count must be a safe integer');
       expect(() => manager.addRule('k', { min: 1, max: 2, type: 'invalid' as unknown as 'integer' | 'float' })).toThrow('Type must be "integer" or "float"');
     });
 

@@ -39,6 +39,60 @@ describe('RuleManager', () => {
     expect(keys.filter(k => k === 'dup')).toHaveLength(1);
   });
 
+  it('returns known values without invoking dynamic rules', () => {
+    const dynamicRule = jest.fn(() => ['dynamic']);
+    manager.addRule('static', ['static value']);
+    manager.addWeightedRule('weighted', ['weighted value'], [1]);
+    manager.addConditionalRule('conditional', {
+      conditions: [{ default: ['conditional value'] }]
+    });
+    manager.addSequentialRule('sequential', ['sequential value']);
+    manager.addRangeRule('range', { min: 1, max: 2, type: 'integer' });
+    manager.addTemplateRule('template', {
+      template: '%slot%',
+      variables: { slot: ['template value'] }
+    });
+    manager.addFunctionRule('function', dynamicRule);
+
+    expect(manager.getPossibleValues('static')).toEqual(['static value']);
+    expect(manager.getPossibleValues('weighted')).toEqual(['weighted value']);
+    expect(manager.getPossibleValues('conditional')).toEqual(['conditional value']);
+    expect(manager.getPossibleValues('sequential')).toEqual(['sequential value']);
+    expect(manager.getPossibleValues('range')).toEqual([]);
+    expect(manager.getPossibleValues('template')).toEqual(['template value']);
+    expect(manager.getPossibleValues('function')).toEqual([]);
+    expect(manager.getPossibleValues('missing')).toEqual([]);
+    expect(dynamicRule).not.toHaveBeenCalled();
+  });
+
+  it('limits template combinations during circular-reference analysis', () => {
+    const choices = Array.from({ length: 10 }, (_, index) => String(index));
+    const variables = Object.fromEntries(
+      'abcdefgh'.split('').map(variable => [variable, choices])
+    );
+    manager.addTemplateRule('largeTemplate', {
+      template: '%a%%b%%c%%d%%e%%f%%g%%h%',
+      variables
+    });
+
+    expect(() => manager.getPossibleValues('largeTemplate')).toThrow(
+      "Template rule 'largeTemplate' exceeds the circular-reference analysis limit of 10000 outputs"
+    );
+  });
+
+  it('uses literal template tokens consistently for generation and analysis', () => {
+    manager.addTemplateRule('template', {
+      template: '%a.b% %axb%',
+      variables: {
+        'a.b': ['left'],
+        axb: ['%loop%']
+      }
+    });
+
+    expect(manager.getPossibleValues('template')).toEqual(['left %loop%']);
+    expect(manager.generateValue('template', {}, random)).toBe('left %loop%');
+  });
+
   it('removes a key from all matching rule types', () => {
     manager.addRule('shared', ['static']);
     manager.addWeightedRule('shared', ['weighted'], [1]);

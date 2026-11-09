@@ -23,6 +23,8 @@ import {
   TemplateRuleManager 
 } from './AdvancedRuleManagers.js';
 
+const MAX_TEMPLATE_ANALYSIS_OUTPUTS = 10_000;
+
 /**
  * Unified manager for all rule types with priority-based resolution
  */
@@ -191,6 +193,73 @@ export class RuleManager {
       }
     }
     return Array.from(keys);
+  }
+
+  /**
+   * Get statically known output values without executing rules
+   */
+  public getPossibleValues(key: string): string[] {
+    switch (this.getRuleType(key)) {
+      case 'static':
+        return this.staticRules.getRule(key) ?? [];
+      case 'weighted': {
+        const rule = this.weightedRules.getRuleData(key);
+        return rule?.values.filter((_, index) => rule.weights[index] > 0) ?? [];
+      }
+      case 'conditional': {
+        const conditions = this.conditionalRules.getRuleData(key)?.conditions ?? [];
+        const values: string[] = [];
+        for (const condition of conditions) {
+          values.push(...(condition.default ?? condition.then ?? []));
+          if (condition.default) {
+            break;
+          }
+        }
+        return values;
+      }
+      case 'sequential':
+        return this.sequentialRules.getRuleData(key)?.values ?? [];
+      case 'template': {
+        const rule = this.templateRules.getRuleData(key);
+        if (!rule) {
+          return [];
+        }
+
+        const variables = this.findVariables(rule.template);
+        let outputs = new Set([rule.template]);
+        for (const variable of variables) {
+          const token = `%${variable}%`;
+          const values = Array.from(new Set(rule.variables[variable] ?? []));
+          const currentOutputs = Array.from(outputs);
+          const matchingOutputs = currentOutputs.filter(output => output.includes(token));
+          const expandedOutputCount = currentOutputs.length - matchingOutputs.length +
+            matchingOutputs.length * values.length;
+          if (expandedOutputCount > MAX_TEMPLATE_ANALYSIS_OUTPUTS) {
+            throw new Error(
+              `Template rule '${key}' exceeds the circular-reference analysis limit of ${MAX_TEMPLATE_ANALYSIS_OUTPUTS} outputs`
+            );
+          }
+          const nextOutputs = new Set<string>();
+          for (const output of outputs) {
+            if (!output.includes(token)) {
+              nextOutputs.add(output);
+              continue;
+            }
+            for (const value of values) {
+              nextOutputs.add(output.split(token).join(value));
+            }
+          }
+          outputs = nextOutputs;
+        }
+        return Array.from(outputs);
+      }
+      default:
+        return [];
+    }
+  }
+
+  private findVariables(text: string): string[] {
+    return Array.from(new Set(Array.from(text.matchAll(/%([^%]+)%/g), match => match[1])));
   }
 
   /**

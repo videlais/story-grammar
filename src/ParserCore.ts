@@ -7,8 +7,6 @@ import {
   ModifierContext,
   FunctionRule,
   ConditionalRule,
-  SequentialRule,
-  RangeRule,
   TemplateRule,
   ParseOptions,
   ParseResult,
@@ -288,6 +286,7 @@ export class Parser {
     } = options;
 
     let attempts = 0;
+    let validating = false;
 
     while (attempts < maxAttempts) {
       attempts++;
@@ -295,7 +294,9 @@ export class Parser {
       try {
         // Validate grammar first if requested
         if (validateFirst && attempts === 1) {
+          validating = true;
           const validation = this.validate();
+          validating = false;
           if (!validation.isValid) {
             let error = 'Validation failed';
             if (validation.missingRules.length > 0) {
@@ -318,12 +319,31 @@ export class Parser {
         };
 
       } catch (error) {
-        if (attempts >= maxAttempts) {
+        if (validating) {
           return {
             success: false,
-            error: this.errorHandler.getHelpfulError(error as Error, { text }),
+            error: error instanceof Error ? error.message : String(error),
             attempts
           };
+        }
+        if (attempts >= maxAttempts) {
+          const parseError = error instanceof Error ? error : new Error(String(error));
+          try {
+            return {
+              success: false,
+              error: this.errorHandler.getHelpfulError(parseError, { text }),
+              attempts
+            };
+          } catch (diagnosticError) {
+            const diagnosticMessage = diagnosticError instanceof Error
+              ? diagnosticError.message
+              : String(diagnosticError);
+            return {
+              success: false,
+              error: `${parseError.message}\n\nError diagnostics unavailable: ${diagnosticMessage}`,
+              attempts
+            };
+          }
         }
 
       }

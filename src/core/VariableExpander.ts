@@ -19,7 +19,7 @@ export class VariableExpander {
    * Set maximum recursion depth
    */
   public setMaxDepth(depth: number): void {
-    if (typeof depth !== 'number' || depth < 1) {
+    if (typeof depth !== 'number' || !Number.isFinite(depth) || depth < 1) {
       throw new Error('Max depth must be at least 1');
     }
     this.maxDepth = depth;
@@ -157,48 +157,83 @@ export class VariableExpander {
    * @returns Array of circular reference chains found
    */
   public findCircularReferences(startRule?: string, visited: Set<string> = new Set()): string[] {
-    const circular: string[] = [];
-    
-    if (startRule) {
-      this.checkRuleForCircularReferences(startRule, visited, circular);
-    } else {
-      // Check all rules
-      const allKeys = this.ruleManager.getAllKeys();
-      for (const key of allKeys) {
-        this.checkRuleForCircularReferences(key, new Set(), circular);
+    const allKeys = this.ruleManager.getAllKeys();
+    const graph = new Map<string, string[]>();
+    const reverseGraph = new Map<string, string[]>();
+    for (const key of allKeys) {
+      reverseGraph.set(key, []);
+    }
+
+    for (const key of allKeys) {
+      const dependencies = new Set<string>();
+      for (const value of this.ruleManager.getPossibleValues(key)) {
+        for (const variable of this.findVariables(value)) {
+          if (!variable.startsWith('@') && this.ruleManager.hasRule(variable)) {
+            dependencies.add(variable);
+          }
+        }
+      }
+      const edges = Array.from(dependencies);
+      graph.set(key, edges);
+      for (const dependency of edges) {
+        reverseGraph.get(dependency)?.push(key);
       }
     }
-    
-    return circular;
-  }
 
-  /**
-   * Check a specific rule for circular references
-   * @private
-   */
-  private checkRuleForCircularReferences(
-    ruleName: string, 
-    visited: Set<string>, 
-    circular: string[]
-  ): void {
-    if (visited.has(ruleName)) {
-      circular.push(ruleName);
-      return;
-    }
-    
-    visited.add(ruleName);
-    
-    // Get a sample value from the rule to check its variables  
-    const sampleValue = this.ruleManager.generateValue(ruleName, {}, this.random);
-    if (sampleValue) {
-      const variables = this.findVariables(sampleValue);
-      for (const variable of variables) {
-        if (!variable.startsWith('@') && this.ruleManager.hasRule(variable)) {
-          this.checkRuleForCircularReferences(variable, new Set(visited), circular);
+    // Keep the legacy parameter for callers; SCC detection derives cycles from the graph.
+    void visited;
+    const roots = startRule ? [startRule] : allKeys;
+    const reachable = new Set<string>();
+    const order: string[] = [];
+    for (const root of roots) {
+      if (reachable.has(root)) {
+        continue;
+      }
+      reachable.add(root);
+      const stack = [{ rule: root, nextDependency: 0 }];
+      while (stack.length > 0) {
+        const current = stack[stack.length - 1];
+        const dependencies = graph.get(current.rule) ?? [];
+        if (current.nextDependency < dependencies.length) {
+          const dependency = dependencies[current.nextDependency++];
+          if (!reachable.has(dependency)) {
+            reachable.add(dependency);
+            stack.push({ rule: dependency, nextDependency: 0 });
+          }
+        } else {
+          order.push(current.rule);
+          stack.pop();
         }
       }
     }
-    
-    visited.delete(ruleName);
+
+    const assigned = new Set<string>();
+    const circular: string[] = [];
+    for (let index = order.length - 1; index >= 0; index--) {
+      const root = order[index];
+      if (assigned.has(root)) {
+        continue;
+      }
+
+      const component: string[] = [];
+      const stack = [root];
+      assigned.add(root);
+      while (stack.length > 0) {
+        const rule = stack.pop()!;
+        component.push(rule);
+        for (const dependency of reverseGraph.get(rule) ?? []) {
+          if (reachable.has(dependency) && !assigned.has(dependency)) {
+            assigned.add(dependency);
+            stack.push(dependency);
+          }
+        }
+      }
+
+      if (component.length > 1 || (graph.get(root) ?? []).includes(root)) {
+        circular.push(...component);
+      }
+    }
+
+    return circular;
   }
 }
