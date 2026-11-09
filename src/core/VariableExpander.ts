@@ -19,7 +19,7 @@ export class VariableExpander {
    * Set maximum recursion depth
    */
   public setMaxDepth(depth: number): void {
-    if (typeof depth !== 'number' || depth < 1) {
+    if (typeof depth !== 'number' || !Number.isFinite(depth) || depth < 1) {
       throw new Error('Max depth must be at least 1');
     }
     this.maxDepth = depth;
@@ -188,10 +188,10 @@ export class VariableExpander {
     
     visited.add(ruleName);
     
-    // Get a sample value from the rule to check its variables  
-    const sampleValue = this.ruleManager.generateValue(ruleName, {}, this.random);
-    if (sampleValue) {
-      const variables = this.findVariables(sampleValue);
+    // Inspect known rule values without executing stateful or user-defined rules.
+    const possibleValues = this.ruleManager.getPossibleValues(ruleName);
+    for (const value of possibleValues) {
+      const variables = this.findVariables(value);
       for (const variable of variables) {
         if (!variable.startsWith('@') && this.ruleManager.hasRule(variable)) {
           this.checkRuleForCircularReferences(variable, new Set(visited), circular);

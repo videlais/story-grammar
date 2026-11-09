@@ -454,6 +454,17 @@ describe('ParserCore Comprehensive Coverage', () => {
       expect(result.attempts).toBe(1);
     });
 
+    it('should not consume sequential values during safeParse validation', () => {
+      parser.addSequentialRule('sequence', ['first', 'second']);
+
+      expect(parser.safeParse('%sequence%')).toMatchObject({
+        success: true,
+        result: 'first',
+        attempts: 1
+      });
+      expect(parser.parse('%sequence%')).toBe('second');
+    });
+
     it('should not change max depth after safeParse retries fail', () => {
       const rules: Grammar = {};
       for (let i = 0; i < 80; i++) {
@@ -684,6 +695,12 @@ describe('ParserCore Comprehensive Coverage', () => {
     it('should handle setMaxDepth validation', () => {
       expect(() => {
         parser.setMaxDepth(0);
+      }).toThrow('Max depth must be at least 1');
+      expect(() => {
+        parser.setMaxDepth(Number.NaN);
+      }).toThrow('Max depth must be at least 1');
+      expect(() => {
+        parser.setMaxDepth(Infinity);
       }).toThrow('Max depth must be at least 1');
     });
 

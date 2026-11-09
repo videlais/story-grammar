@@ -23,6 +23,40 @@ describe('GrammarValidator', () => {
     expect(summary).toContain('Grammar validation passed');
   });
 
+  it('detects sequential cycles without consuming sequential values', () => {
+    ruleManager.addSequentialRule('sequence', ['first', 'second']);
+    ruleManager.addSequentialRule('loop', ['%loop%']);
+
+    const result = validator.validate();
+
+    expect(result.circularReferences).toContain('loop');
+    expect(ruleManager.generateValue('sequence', {}, new SeededRandom())).toBe('first');
+  });
+
+  it('does not execute function rules while checking for circular references', () => {
+    const rule = jest.fn(() => ['value']);
+    ruleManager.addFunctionRule('dynamic', rule);
+
+    validator.validate();
+
+    expect(rule).not.toHaveBeenCalled();
+  });
+
+  it('checks all statically known values for circular references', () => {
+    ruleManager.addWeightedRule('weighted', ['safe', '%weighted%'], [0.5, 0.5]);
+    ruleManager.addConditionalRule('conditional', {
+      conditions: [
+        { if: () => false, then: ['safe'] },
+        { default: ['%conditional%'] }
+      ]
+    });
+
+    const result = validator.validate();
+
+    expect(result.circularReferences).toContain('weighted');
+    expect(result.circularReferences).toContain('conditional');
+  });
+
   it('reports invalid grammar details and truncates long unreachable lists', () => {
     ruleManager.addRule('start', ['%missing%']);
     ruleManager.addRule('loopA', ['%loopB%']);

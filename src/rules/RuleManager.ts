@@ -194,6 +194,30 @@ export class RuleManager {
   }
 
   /**
+   * Get statically known output values without executing rules
+   */
+  public getPossibleValues(key: string): string[] {
+    switch (this.getRuleType(key)) {
+      case 'static':
+        return this.staticRules.getRule(key) ?? [];
+      case 'weighted':
+        return this.weightedRules.getRuleData(key)?.values ?? [];
+      case 'conditional':
+        return this.conditionalRules.getRuleData(key)?.conditions.flatMap(condition =>
+          condition.default ?? condition.then ?? []
+        ) ?? [];
+      case 'sequential':
+        return this.sequentialRules.getRuleData(key)?.values ?? [];
+      case 'template': {
+        const rule = this.templateRules.getRuleData(key);
+        return rule ? Object.values(rule.variables).flat() : [];
+      }
+      default:
+        return [];
+    }
+  }
+
+  /**
    * Reset sequential rule
    */
   public resetSequentialRule(key: string): boolean {

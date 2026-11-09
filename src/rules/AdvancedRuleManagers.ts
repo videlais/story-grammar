@@ -179,9 +179,16 @@ export class RangeRuleManager extends BaseRuleManager<RangeRule> {
     if (config.min >= config.max) {
       throw new Error('Min must be less than max');
     }
+    const span = config.max - config.min;
+    if (!Number.isFinite(span)) {
+      throw new Error('Range span must be finite');
+    }
     if (config.step !== undefined &&
         (typeof config.step !== 'number' || !Number.isFinite(config.step) || config.step <= 0)) {
       throw new Error('Step must be a positive finite number');
+    }
+    if (config.step !== undefined && !Number.isSafeInteger(Math.floor(span / config.step) + 1)) {
+      throw new Error('Range step count must be a safe integer');
     }
     if (!['integer', 'float'].includes(config.type)) {
       throw new Error('Type must be "integer" or "float"');
