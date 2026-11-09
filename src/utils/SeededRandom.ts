@@ -111,7 +111,13 @@ export class SeededRandom {
       }
     }
     
-    // Fallback to last value (should not happen with proper weights)
+    for (let i = cumulativeWeights.length - 1; i >= 0; i--) {
+      const previousWeight = i === 0 ? 0 : cumulativeWeights[i - 1];
+      if (cumulativeWeights[i] > previousWeight) {
+        return values[i];
+      }
+    }
+
     return values[values.length - 1];
   }
 }

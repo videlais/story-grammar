@@ -64,6 +64,16 @@ describe('SeededRandom', () => {
     }
   });
 
+  it('falls back to the last positive-weight value when cumulative weights undershoot', () => {
+    const randomSpy = jest.spyOn(random, 'random').mockReturnValue(0.99999);
+
+    try {
+      expect(random.weightedChoice(['positive', 'zero'], [0.99995, 0.99995])).toBe('positive');
+    } finally {
+      randomSpy.mockRestore();
+    }
+  });
+
   it('falls back to the last weighted value when random exceeds all cumulative weights', () => {
     const randomSpy = jest.spyOn(random, 'random').mockReturnValue(0.95);
 

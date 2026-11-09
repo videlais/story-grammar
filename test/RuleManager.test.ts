@@ -65,6 +65,21 @@ describe('RuleManager', () => {
     expect(dynamicRule).not.toHaveBeenCalled();
   });
 
+  it('limits template combinations during circular-reference analysis', () => {
+    const choices = Array.from({ length: 10 }, (_, index) => String(index));
+    const variables = Object.fromEntries(
+      'abcdefgh'.split('').map(variable => [variable, choices])
+    );
+    manager.addTemplateRule('largeTemplate', {
+      template: '%a%%b%%c%%d%%e%%f%%g%%h%',
+      variables
+    });
+
+    expect(() => manager.getPossibleValues('largeTemplate')).toThrow(
+      "Template rule 'largeTemplate' exceeds the circular-reference analysis limit of 10000 outputs"
+    );
+  });
+
   it('removes a key from all matching rule types', () => {
     manager.addRule('shared', ['static']);
     manager.addWeightedRule('shared', ['weighted'], [1]);

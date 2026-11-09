@@ -23,6 +23,8 @@ import {
   TemplateRuleManager 
 } from './AdvancedRuleManagers.js';
 
+const MAX_TEMPLATE_ANALYSIS_OUTPUTS = 10_000;
+
 /**
  * Unified manager for all rule types with priority-based resolution
  */
@@ -227,7 +229,16 @@ export class RuleManager {
         let outputs = new Set([rule.template]);
         for (const variable of variables) {
           const token = `%${variable}%`;
-          const values = rule.variables[variable] ?? [];
+          const values = Array.from(new Set(rule.variables[variable] ?? []));
+          const currentOutputs = Array.from(outputs);
+          const matchingOutputs = currentOutputs.filter(output => output.includes(token));
+          const expandedOutputCount = currentOutputs.length - matchingOutputs.length +
+            matchingOutputs.length * values.length;
+          if (expandedOutputCount > MAX_TEMPLATE_ANALYSIS_OUTPUTS) {
+            throw new Error(
+              `Template rule '${key}' exceeds the circular-reference analysis limit of ${MAX_TEMPLATE_ANALYSIS_OUTPUTS} outputs`
+            );
+          }
           const nextOutputs = new Set<string>();
           for (const output of outputs) {
             if (!output.includes(token)) {

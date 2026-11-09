@@ -475,6 +475,25 @@ describe('ParserCore Comprehensive Coverage', () => {
       });
     });
 
+    it('should report template analysis limits instead of retrying without validation', () => {
+      const choices = Array.from({ length: 10 }, (_, index) => String(index));
+      const variables = Object.fromEntries(
+        'abcdefgh'.split('').map(variable => [variable, choices])
+      );
+      parser.addTemplateRule('largeTemplate', {
+        template: '%a%%b%%c%%d%%e%%f%%g%%h%',
+        variables
+      });
+
+      const result = parser.safeParse('hello');
+
+      expect(result).toMatchObject({
+        success: false,
+        attempts: 1
+      });
+      expect(result.error).toContain('analysis limit of 10000 outputs');
+    });
+
     it('should not change max depth after safeParse retries fail', () => {
       const rules: Grammar = {};
       for (let i = 0; i < 80; i++) {

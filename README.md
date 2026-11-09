@@ -494,7 +494,7 @@ if (!validation.isValid) {
 }
 ```
 
-Circular-reference validation checks statically reachable outputs for static, positive-weight, conditional, sequential, and template rules without executing user-defined function rules. Template references are analyzed after slot substitution, and shared dependencies are checked once.
+Circular-reference validation checks statically reachable outputs for static, positive-weight, conditional, sequential, and template rules without executing user-defined function rules. Template references are analyzed after slot substitution, and shared dependencies are checked once. Template analysis is limited to 10,000 distinct output combinations; larger templates return an explicit validation error rather than risking excessive time or memory.
 
 ### Complexity Analysis
 
