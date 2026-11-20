@@ -20,6 +20,10 @@ export declare class SeededRandom {
      */
     getSeed(): number | null;
     /**
+     * Run an operation while restoring the generator state afterward
+     */
+    withPreservedState<T>(operation: () => T): T;
+    /**
      * Generate a random number between 0 and 1
      * Uses LCG when seed is set, Math.random() otherwise
      * @returns Random number between 0 and 1

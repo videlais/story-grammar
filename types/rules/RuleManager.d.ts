@@ -95,6 +95,11 @@ export declare class RuleManager {
      */
     getAllKeys(): string[];
     /**
+     * Get statically known output values without executing rules
+     */
+    getPossibleValues(key: string): string[];
+    private findVariables;
+    /**
      * Reset sequential rule
      */
     resetSequentialRule(key: string): boolean;

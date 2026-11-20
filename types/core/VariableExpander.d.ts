@@ -64,10 +64,5 @@ export declare class VariableExpander {
      * @returns Array of circular reference chains found
      */
     findCircularReferences(startRule?: string, visited?: Set<string>): string[];
-    /**
-     * Check a specific rule for circular references
-     * @private
-     */
-    private checkRuleForCircularReferences;
 }
 //# sourceMappingURL=VariableExpander.d.ts.map
