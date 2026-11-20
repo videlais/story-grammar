@@ -147,14 +147,23 @@ export class RangeRuleManager extends BaseRuleManager {
         if (!key || typeof key !== 'string') {
             throw new Error('Key must be a non-empty string');
         }
-        if (typeof config.min !== 'number' || typeof config.max !== 'number') {
-            throw new Error('Min and max must be numbers');
+        if (typeof config.min !== 'number' || !Number.isFinite(config.min) ||
+            typeof config.max !== 'number' || !Number.isFinite(config.max)) {
+            throw new Error('Min and max must be finite numbers');
         }
         if (config.min >= config.max) {
             throw new Error('Min must be less than max');
         }
-        if (config.step !== undefined && (typeof config.step !== 'number' || config.step <= 0)) {
-            throw new Error('Step must be a positive number');
+        const span = config.max - config.min;
+        if (!Number.isFinite(span)) {
+            throw new Error('Range span must be finite');
+        }
+        if (config.step !== undefined &&
+            (typeof config.step !== 'number' || !Number.isFinite(config.step) || config.step <= 0)) {
+            throw new Error('Step must be a positive finite number');
+        }
+        if (config.step !== undefined && !Number.isSafeInteger(Math.floor(span / config.step) + 1)) {
+            throw new Error('Range step count must be a safe integer');
         }
         if (!['integer', 'float'].includes(config.type)) {
             throw new Error('Type must be "integer" or "float"');
@@ -246,7 +255,8 @@ export class TemplateRuleManager extends BaseRuleManager {
             const values = rule.variables[variable];
             if (values && values.length > 0) {
                 const value = random.randomChoice(values);
-                result = result.replace(new RegExp(`%${variable}%`, 'g'), value);
+                const token = `%${variable}%`;
+                result = result.split(token).join(value);
             }
         }
         return result;

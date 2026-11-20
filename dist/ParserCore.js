@@ -211,12 +211,15 @@ export class Parser {
     safeParse(text, options = {}) {
         const { preserveContext = false, validateFirst = true, maxAttempts = 3 } = options;
         let attempts = 0;
+        let validating = false;
         while (attempts < maxAttempts) {
             attempts++;
             try {
                 // Validate grammar first if requested
                 if (validateFirst && attempts === 1) {
+                    validating = true;
                     const validation = this.validate();
+                    validating = false;
                     if (!validation.isValid) {
                         let error = 'Validation failed';
                         if (validation.missingRules.length > 0) {
@@ -238,17 +241,32 @@ export class Parser {
                 };
             }
             catch (error) {
-                if (attempts >= maxAttempts) {
+                if (validating) {
                     return {
                         success: false,
-                        error: this.errorHandler.getHelpfulError(error, { text }),
+                        error: error instanceof Error ? error.message : String(error),
                         attempts
                     };
                 }
-                // For recursion errors, try reducing max depth
-                if (this.errorHandler['isRecursionError'](error)) {
-                    const currentDepth = this.variableExpander.getMaxDepth();
-                    this.variableExpander.setMaxDepth(Math.max(10, Math.floor(currentDepth * 0.7)));
+                if (attempts >= maxAttempts) {
+                    const parseError = error instanceof Error ? error : new Error(String(error));
+                    try {
+                        return {
+                            success: false,
+                            error: this.errorHandler.getHelpfulError(parseError, { text }),
+                            attempts
+                        };
+                    }
+                    catch (diagnosticError) {
+                        const diagnosticMessage = diagnosticError instanceof Error
+                            ? diagnosticError.message
+                            : String(diagnosticError);
+                        return {
+                            success: false,
+                            error: `${parseError.message}\n\nError diagnostics unavailable: ${diagnosticMessage}`,
+                            attempts
+                        };
+                    }
                 }
             }
         }
@@ -298,9 +316,8 @@ export class Parser {
         if (!Number.isInteger(count) || count <= 0) {
             throw new Error('Count must be a positive integer');
         }
-        const variations = [];
-        const originalSeed = this.random.getSeed();
-        try {
+        return this.random.withPreservedState(() => {
+            const variations = [];
             for (let i = 0; i < count; i++) {
                 if (seed !== undefined) {
                     this.random.setSeed(seed + i);
@@ -308,16 +325,7 @@ export class Parser {
                 variations.push(this.parse(text, false));
             }
             return variations;
-        }
-        finally {
-            // Restore original seed state
-            if (originalSeed !== null) {
-                this.random.setSeed(originalSeed);
-            }
-            else {
-                this.random.clearSeed();
-            }
-        }
+        });
     }
     // ==================== CONFIGURATION ====================
     /**

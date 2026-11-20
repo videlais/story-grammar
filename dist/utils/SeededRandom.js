@@ -33,6 +33,20 @@ export class SeededRandom {
         return this.seed;
     }
     /**
+     * Run an operation while restoring the generator state afterward
+     */
+    withPreservedState(operation) {
+        const seed = this.seed;
+        const currentSeed = this.currentSeed;
+        try {
+            return operation();
+        }
+        finally {
+            this.seed = seed;
+            this.currentSeed = currentSeed;
+        }
+    }
+    /**
      * Generate a random number between 0 and 1
      * Uses LCG when seed is set, Math.random() otherwise
      * @returns Random number between 0 and 1
@@ -83,11 +97,16 @@ export class SeededRandom {
         const random = this.random();
         // Find the first cumulative weight that is greater than our random number
         for (let i = 0; i < cumulativeWeights.length; i++) {
-            if (random <= cumulativeWeights[i]) {
+            if (random < cumulativeWeights[i]) {
                 return values[i];
             }
         }
-        // Fallback to last value (should not happen with proper weights)
+        for (let i = cumulativeWeights.length - 1; i >= 0; i--) {
+            const previousWeight = i === 0 ? 0 : cumulativeWeights[i - 1];
+            if (cumulativeWeights[i] > previousWeight) {
+                return values[i];
+            }
+        }
         return values[values.length - 1];
     }
 }

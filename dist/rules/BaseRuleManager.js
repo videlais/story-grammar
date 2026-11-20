@@ -186,8 +186,8 @@ export class WeightedRuleManager extends BaseRuleManager {
         }
         // Validate weights
         for (const weight of weights) {
-            if (typeof weight !== 'number' || weight < 0) {
-                throw new Error('All weights must be non-negative numbers');
+            if (typeof weight !== 'number' || !Number.isFinite(weight) || weight < 0) {
+                throw new Error('All weights must be finite non-negative numbers');
             }
         }
         const weightSum = weights.reduce((sum, weight) => sum + weight, 0);
