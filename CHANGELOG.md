@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Refactored `VariableExpander` and `RuleManager` interfaces; circular-reference checking moved out of `VariableExpander` into graph-based validation.
+- Refactored `VariableExpander` and `RuleManager` interfaces; `VariableExpander.findCircularReferences()` now uses graph-based validation.
 - Updated dependencies (`jest`, `ts-jest`, `eslint`, `@typescript-eslint`, `webpack`, `js-yaml`, `brace-expansion`).
 
 ### Fixed
